@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0 (2026-10-21)
+- **Tempo Follow** replaces Write Tempo. After a build, the device stores its song's range and BPM (saved with
+  the set). Whenever playback enters that song, from the first cue to the end of the last section, it switches
+  Live's tempo to the song's BPM. No saving, reopening or playthrough is needed, and it works for any number of songs.
+  It acts only on entering a song, so live tempo changes are kept.
+- The third button is now a **Tempo Follow: On/Off** switch, saved with the set.
+- Removed the saved-file writer (`aicb_tempo.py`). `tempoMode: "record"` and `"set"` are still available.
+
 ## v0.3.0 (2026-10-21)
 - **Write Tempo** (new default): after building, save the set and press Write Tempo. Every analyzed song gets a
   tempo step from its first cue to the end of its last section, written straight into the saved set in about a second.

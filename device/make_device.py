@@ -44,23 +44,46 @@ box("obj-title", "comment", [120, 20, 200, 20], "SEQUENCER ANALYZER", ins=1, out
 # buttons
 button("obj-cuebtn", [120, 60, 120, 18], "Choose Cue Folder", [8, 26, 128, 20], "CueFolder")
 button("obj-buildbtn", [300, 60, 120, 18], "Analyze & Build", [142, 26, 128, 20], "Build")
-button("obj-tempobtn", [460, 60, 120, 18], "Write Tempo", [276, 26, 110, 20], "Tempo")
+# Tempo Follow: on/off toggle, saved with the set (default on)
+box("obj-tempobtn", "live.text", [460, 60, 120, 18], ins=1, outs=2, outtype=["", ""], pres=[276, 26, 110, 20],
+    mode=1, text="Tempo Follow: Off", texton="Tempo Follow: On", varname="TempoFollow", parameter_enable=1,
+    activebgoncolor=[1.0, 0.71, 0.2, 1.0], activetextoncolor=[0.1, 0.1, 0.1, 1.0],
+    saved_attribute_attributes={"valueof": {
+        "parameter_longname": "TempoFollow", "parameter_shortname": "Follow", "parameter_type": 2,
+        "parameter_mmax": 1, "parameter_enum": ["off", "on"], "parameter_initial_enable": 1,
+        "parameter_initial": [1], "parameter_invisible": 1}})
+
+# this song's tempo range, stored with the set (hidden)
+def stored(id_, name, y, lo, hi):
+    box(id_, "live.numbox", [620, y, 60, 15], ins=1, outs=2, outtype=["", "float"], varname=name,
+        parameter_enable=1, saved_attribute_attributes={"valueof": {
+            "parameter_longname": name, "parameter_shortname": name, "parameter_type": 0,
+            "parameter_mmin": lo, "parameter_mmax": hi, "parameter_initial_enable": 1,
+            "parameter_initial": [0], "parameter_invisible": 1, "parameter_unitstyle": 0}})
+stored("obj-fstart", "FollowStart", 250, 0.0, 1000000.0)
+stored("obj-fend", "FollowEnd", 280, 0.0, 1000000.0)
+stored("obj-fbpm", "FollowBpm", 310, 0.0, 999.0)
+box("obj-route", "newobj", [620, 220, 110, 22], "route start end bpm", ins=1, outs=4)
+box("obj-pstart", "newobj", [700, 250, 80, 22], "prepend fstart", ins=1, outs=1)
+box("obj-pend", "newobj", [700, 280, 80, 22], "prepend fend", ins=1, outs=1)
+box("obj-pbpm", "newobj", [700, 310, 80, 22], "prepend fbpm", ins=1, outs=1)
+box("obj-pfollow", "newobj", [460, 90, 90, 22], "prepend followon", ins=1, outs=1)
+box("obj-init", "message", [700, 150, 40, 22], "init", ins=2, outs=1)
 # live.text in button mode sends a bang from its left outlet on click
 box("obj-dialog", "newobj", [120, 120, 100, 22], "opendialog fold", ins=1, outs=2)
 box("obj-prep", "newobj", [120, 150, 120, 22], "prepend setcuedir", ins=1, outs=1)
 box("obj-buildmsg", "message", [300, 120, 50, 22], "build", ins=2, outs=1)
-box("obj-tempomsg", "message", [460, 120, 90, 22], "writetempo", ins=2, outs=1)
 wire("obj-cuebtn", 0, "obj-dialog", 0)
 wire("obj-dialog", 0, "obj-prep", 0)
 wire("obj-buildbtn", 0, "obj-buildmsg", 0)
-wire("obj-tempobtn", 0, "obj-tempomsg", 0)
+wire("obj-tempobtn", 0, "obj-pfollow", 0)
 
 # engines
 box("obj-node", "newobj", [120, 220, 260, 22], "node.script aicb_node.js @autostart 1 @watch 0", ins=1, outs=2)
-box("obj-js", "newobj", [300, 280, 120, 22], "js aicb_live.js", ins=1, outs=3)
+box("obj-js", "newobj", [300, 280, 120, 22], "js aicb_live.js", ins=1, outs=4)
 wire("obj-prep", 0, "obj-node", 0)
 wire("obj-buildmsg", 0, "obj-js", 0)
-wire("obj-tempomsg", 0, "obj-js", 0)
+wire("obj-pfollow", 0, "obj-js", 0)
 wire("obj-js", 0, "obj-node", 0)
 wire("obj-node", 0, "obj-js", 0)
 
@@ -69,6 +92,13 @@ box("obj-thisdev", "newobj", [600, 150, 90, 22], "live.thisdevice", ins=1, outs=
 box("obj-delay", "newobj", [600, 180, 70, 22], "delay 2000", ins=2, outs=1)
 box("obj-hello", "message", [600, 210, 50, 22], "hello", ins=2, outs=1)
 wire("obj-thisdev", 0, "obj-delay", 0); wire("obj-delay", 0, "obj-hello", 0); wire("obj-hello", 0, "obj-node", 0)
+# the Live API is ready once live.thisdevice bangs: start following
+wire("obj-thisdev", 0, "obj-init", 0); wire("obj-init", 0, "obj-js", 0)
+# stored range: js writes it, and the restored values flow back to js when the set loads
+wire("obj-js", 3, "obj-route", 0)
+wire("obj-route", 0, "obj-fstart", 0); wire("obj-route", 1, "obj-fend", 0); wire("obj-route", 2, "obj-fbpm", 0)
+wire("obj-fstart", 0, "obj-pstart", 0); wire("obj-fend", 0, "obj-pend", 0); wire("obj-fbpm", 0, "obj-pbpm", 0)
+wire("obj-pstart", 0, "obj-js", 0); wire("obj-pend", 0, "obj-js", 0); wire("obj-pbpm", 0, "obj-js", 0)
 
 # progress bar: custom-drawn [jsui]
 box("obj-progress", "jsui", [480, 300, 200, 8], ins=1, outs=1, pres=[8, 54, 378, 8],

@@ -1,8 +1,9 @@
 // Sequencer Analyzer - Live API side (Max [js] object, classic ES5 JavaScript).
-// Outlet 0 -> node.script, 1 -> status text, 2 -> progress bar ([jsui], 0..100).
+// Outlet 0 -> node.script, 1 -> status text, 2 -> progress bar ([jsui], 0..100),
+// 3 -> stored parameters (start/end/bpm of this song's tempo range, saved with the Live Set).
 autowatch = 1;
 inlets = 1;
-outlets = 3;
+outlets = 4;
 
 var SECTIONS_NAME = "SECTIONS";
 var CUES_NAME = "GUIDE CUES";
@@ -87,14 +88,7 @@ function plan() {
   warpSong();
 }
 
-// "Write Tempo" button: node decides (file mode writes the saved set; record mode calls back "recordtempo")
-function writetempo() {
-  var path = str(api("live_set"), "file_path");
-  if (!path || path == "0") { say("Save the set first (Cmd+S), then press Write Tempo"); return; }
-  outlet(0, "writetempo", path);
-}
-
-function recordtempo() {   // real-time recording for the last analyzed song (tempoMode "record")
+function recordtempo() {   // real-time recording for the last analyzed song (tempoMode "record", not on a button)
   if (!state || !state.plan || state.songStartBeat === undefined) { say("Run Analyze & Build first"); return; }
   if (state.busy) { say("Already working..."); return; }
   state.busy = true;
@@ -339,13 +333,10 @@ function finish() {
   var p = state.plan;
   var msg = "Done: " + p.bpm + " BPM, " + state.nSections + " sections, " + state.nCues + " cues";
   if (p.recordTempo && p.tempoMode != "record" && p.tempoMode != "set") {
-    // queue this song's tempo step; written into the saved set by Write Tempo
-    var labels = [], seen = {};
-    for (var i = 0; i < p.sections.length; i++) if (!seen[p.sections[i].label]) { seen[p.sections[i].label] = 1; labels.push(p.sections[i].label); }
     var m = p.meter, P = Math.floor(Math.min(state.firstCueBeat, state.songStartBeat) / m) * m;
-    var name = state.file.replace(/^.*[\/\\]/, "");
-    outlet(0, "queuetempo", JSON.stringify({ start: P, end: state.lastSectionEnd || state.songEndBeat, bpm: p.bpm, song: name, sections: labels }));
-    msg += ". Tempo: save the set (Cmd+S), then press Write Tempo";
+    var E = state.lastSectionEnd || state.songEndBeat;
+    setFollow(P, E, p.bpm);
+    msg += ". Tempo follows this song: " + p.bpm + " BPM, bars " + (P / m + 1) + "-" + Math.round(E / m);
   }
   if (p.note) msg += ". " + p.note.charAt(0).toUpperCase() + p.note.slice(1);
   if (state.tempoNote) msg += ". Note: " + state.tempoNote;
@@ -354,4 +345,54 @@ function finish() {
   say(msg);
   bar(100);
   state.busy = false;
+}
+
+// ------------------------------------------------------------------ tempo follow
+// While the playhead is inside this song's range (first cue -> end of last section), set Live's tempo to
+// the song's BPM. The range and BPM live in three hidden stored parameters, so they are saved with the set.
+var LOOKAHEAD = 0.25;          // beats: switch a little early to cover the notification interval
+var follow = { on: 1, start: 0, end: 0, bpm: 0, inside: false };
+var songObs = null, tempoApi = null, pendingTempo = null;
+
+function setFollow(start, end, bpm) {
+  follow.start = start; follow.end = end; follow.bpm = bpm; follow.inside = false;
+  outlet(3, "start", start);
+  outlet(3, "end", end);
+  outlet(3, "bpm", bpm);
+  checkPos(num(api("live_set"), "current_song_time"));
+}
+// values restored from the stored parameters when the set loads
+function fstart(v) { follow.start = Number(v); }
+function fend(v) { follow.end = Number(v); }
+function fbpm(v) { follow.bpm = Number(v); }
+function followon(v) {
+  follow.on = Number(v) ? 1 : 0;
+  follow.inside = false;
+  if (follow.on && songObs) checkPos(num(api("live_set"), "current_song_time"));
+}
+
+function init() {                // from live.thisdevice: the Live API is ready
+  if (songObs) return;
+  tempoApi = api("live_set");
+  songObs = new LiveAPI(function (args) {
+    if (args && args[0] == "current_song_time") checkPos(Number(args[1]));
+  }, "live_set");
+  songObs.property = "current_song_time";
+}
+
+function checkPos(pos) {
+  if (!tempoApi) tempoApi = api("live_set");
+  if (!follow.on || !(follow.bpm >= 20) || !(follow.end > follow.start)) return;
+  var inside = pos >= follow.start - LOOKAHEAD && pos < follow.end;
+  var entering = inside && !follow.inside;
+  follow.inside = inside;
+  if (!entering) return;            // only on entering the song, so live tempo changes are left alone
+  if (pendingTempo !== null) return;
+  if (Math.abs(num(tempoApi, "tempo") - follow.bpm) < 0.005) return;
+  // the Live API does not allow changes from inside a notification: defer
+  pendingTempo = follow.bpm;
+  later(function () {
+    try { tempoApi.set("tempo", pendingTempo); } catch (e) {}
+    pendingTempo = null;
+  }, 0);
 }

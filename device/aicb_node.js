@@ -18,7 +18,7 @@ const DEFAULTS = {
   leadBars: 2,          // section-name cue this many bars before the section
   counts: true,         // "1 2 3 4" in the bar before each section
   recordTempo: true,    // tempo automation from the first cue to the end of the last section
-  tempoMode: "file",    // "file" = Write Tempo edits the saved set (instant, then reopen) |
+  tempoMode: "follow",  // "follow" = the device switches Live's tempo while its song plays (no automation) |
                         // "record" = record automation in real time (plays the song) | "set" = just set the tempo
   structure: "auto",    // section engine: "auto" | "allin1" | "heuristic"
   vocalThreshold: 0.12  // below this vocal share a song is treated as instrumental
@@ -140,7 +140,7 @@ function makePlan(result, cfg) {
     bpm: result.bpm, meter: result.meter, beat_period: result.beat_period,
     first_downbeat: result.first_downbeat, bars: result.bars, duration: result.duration,
     tempo_stable: result.tempo_stable, tempo_range: result.tempo_range, engine: result.engine,
-    sections, counts, leadBars: cfg.leadBars, recordTempo: !!cfg.recordTempo, tempoMode: cfg.tempoMode || "record",
+    sections, counts, leadBars: cfg.leadBars, recordTempo: !!cfg.recordTempo, tempoMode: cfg.tempoMode || "follow",
     note: result.note || "",
     missingCues: Array.from(missing)
   };
@@ -193,46 +193,7 @@ async function run(file) {
   } finally { busy = false; }
 }
 
-// ---------------------------------------------------------------- tempo written into the saved set
-const QUEUE = path.join(SUPPORT, "tempo_queue.json");
-function loadQueue() { try { return JSON.parse(fs.readFileSync(QUEUE, "utf8")); } catch (e) { return []; } }
-function saveQueue(q) { fs.mkdirSync(SUPPORT, { recursive: true }); fs.writeFileSync(QUEUE, JSON.stringify(q, null, 1)); }
-function queueTempo(entry) {
-  const q = loadQueue().filter(e => !(e.song === entry.song && Math.abs(e.start - entry.start) < 4));
-  q.push(entry);
-  saveQueue(q);
-}
-function writeTempo(alsPath) {
-  const cfg = loadConfig();
-  if (cfg.tempoMode === "record" || cfg.tempoMode === "set") { if (maxAPI) maxAPI.outlet("recordtempo"); return; }
-  const q = loadQueue();
-  if (!q.length) return status("Nothing to write: run Analyze & Build first");
-  const tmp = path.join(os.tmpdir(), "seqan_tempo_" + Date.now() + ".json");
-  fs.writeFileSync(tmp, JSON.stringify(q));
-  const script = path.join(path.dirname(cfg.engine), "aicb_tempo.py");
-  const p = spawn(cfg.python, [script, alsPath, tmp]);
-  let out = "", err = "";
-  p.stdout.on("data", d => out += d);
-  p.stderr.on("data", d => err += d);
-  p.on("close", code => {
-    try { fs.unlinkSync(tmp); } catch (e) {}
-    let r;
-    try { r = JSON.parse(out); } catch (e) { return status("Error writing tempo: " + (err.trim().split("\n").pop() || "unknown")); }
-    if (!r.written.length) {
-      const why = r.skipped.length ? r.skipped[0].why : "nothing to write";
-      return status(why.indexOf("not saved") >= 0 || why.indexOf("not in the saved") >= 0
-        ? "Save the set first (Cmd+S) so the new clips are in the file, then press Write Tempo"
-        : "Tempo not written: " + why);
-    }
-    saveQueue(q.filter(e => !r.written.some(w => w.song === e.song && Math.abs(w.start - e.start) < 1e-6)));
-    const songs = r.written.map(w => w.bpm + " BPM").join(", ");
-    status("Tempo written (" + songs + "). Now reopen the set: File > Open Recent > " + path.basename(alsPath, ".als"));
-  });
-}
-
 if (maxAPI) {
-  maxAPI.addHandler("queuetempo", (...parts) => { try { queueTempo(JSON.parse(parts.join(" "))); } catch (e) { status("Error: " + e.message); } });
-  maxAPI.addHandler("writetempo", (...parts) => writeTempo(parts.join(" ")));
   maxAPI.addHandler("analyze", (...parts) => run(parts.join(" ")));
   maxAPI.addHandler("setcuedir", (...parts) => {
     const cfg = loadConfig();
@@ -253,4 +214,4 @@ if (maxAPI) {
   });
 }
 
-module.exports = { queueTempo, loadQueue, writeTempo, makePlan, buildCueIndex, findCue, cueKey, audioDuration, maxToPosix };
+module.exports = { makePlan, buildCueIndex, findCue, cueKey, audioDuration, maxToPosix };

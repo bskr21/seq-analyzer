@@ -22,7 +22,6 @@
 | `device/aicb_live.js` | Max `[js]` (classic ES5) | Everything that touches the Live Set through the Live Object Model (LOM). |
 | `device/aicb_node.js` | Node for Max | Runs the Python engine, reads progress, matches cue files to section labels, builds the **plan**. |
 | `engine/aicb_analyze.py` | Python 3.11 venv | Beat/tempo grid and section detection → JSON. |
-| `engine/aicb_tempo.py` | Python 3.11 venv | Writes queued tempo steps into the saved `.als` (Write Tempo). |
 | `device/aicb_progress.js` | Max `[jsui]` | Draws the progress bar. |
 | `engine/natten_shim/` | Python | Pure-PyTorch stand-in for the NATTEN attention ops All-In-One needs (verified against a brute-force reference). |
 | `setup.command` | Terminal | One-time installer. |
@@ -38,9 +37,10 @@
    2. **Tracks**: create or reuse `SECTIONS` (MIDI) and `GUIDE CUES` (audio) directly above the song track.
    3. **Section clips**: one empty MIDI clip per section, named and colored by section type.
    4. **Cue clips**: unwarped audio clips, the section name `leadBars` ahead and counts in the bar before.
-   5. **Tempo**: queue the song's tempo step: start bar, end bar and BPM, in `tempo_queue.json`.
-5. **Write Tempo** (after ⌘S): Node runs `aicb_tempo.py <set.als> <queue>`, which backs up the set and writes every
-   queued step into the main track's tempo envelope. You then reopen the set.
+   5. **Tempo**: store the song's tempo range (start beat, end beat, BPM) in three hidden device parameters,
+      which are saved with the set.
+5. **Tempo Follow** (while the set is open): the device observes `current_song_time`. When the playhead enters its
+   range, it sets `song.tempo` to the stored BPM.
 
 ## Design decisions
 
@@ -49,7 +49,8 @@
 - **Why `[js]` and not Node for the Live side?** Only Max's `js`/`v8` objects can access `LiveAPI`.
 - **Why warp the song?** Warp markers make the grid exact and keep the song locked to bars even if the
   set tempo changes later. Two markers (first and last downbeat) give a constant tempo.
-- **Why edit the saved file for tempo?** The LOM can set `song.tempo` but has no function to write arrangement
-  automation. Recording it in Live works, but it means playing every song once in real time. Editing the saved set is
-  instant and handles many songs at once. See [live-integration.md](live-integration.md).
+- **Why Tempo Follow instead of automation?** The LOM can set `song.tempo` but can't write arrangement automation,
+  and clip envelopes in the Arrangement can only modulate, not set absolute values. Recording automation means
+  playing every song in real time, and editing the saved file means saving and reopening. Following the playhead needs
+  neither, and works for any number of songs. See [live-integration.md](live-integration.md).
 - **Why unwarped cue clips?** Spoken cues should never be time-stretched.

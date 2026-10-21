@@ -196,7 +196,7 @@
       "",
       ""
      ],
-     "text": "Write Tempo",
+     "text": "Tempo Follow: Off",
      "presentation": 1,
      "presentation_rect": [
       276,
@@ -204,23 +204,255 @@
       110,
       20
      ],
-     "mode": 0,
-     "texton": "Write Tempo",
-     "varname": "Tempo",
+     "mode": 1,
+     "texton": "Tempo Follow: On",
+     "varname": "TempoFollow",
      "parameter_enable": 1,
+     "activebgoncolor": [
+      1.0,
+      0.71,
+      0.2,
+      1.0
+     ],
+     "activetextoncolor": [
+      0.1,
+      0.1,
+      0.1,
+      1.0
+     ],
      "saved_attribute_attributes": {
       "valueof": {
-       "parameter_longname": "Tempo",
-       "parameter_shortname": "Tempo",
+       "parameter_longname": "TempoFollow",
+       "parameter_shortname": "Follow",
        "parameter_type": 2,
        "parameter_mmax": 1,
        "parameter_enum": [
-        "val1",
-        "val2"
+        "off",
+        "on"
+       ],
+       "parameter_initial_enable": 1,
+       "parameter_initial": [
+        1
        ],
        "parameter_invisible": 1
       }
      }
+    }
+   },
+   {
+    "box": {
+     "id": "obj-fstart",
+     "maxclass": "live.numbox",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "patching_rect": [
+      620,
+      250,
+      60,
+      15
+     ],
+     "outlettype": [
+      "",
+      "float"
+     ],
+     "varname": "FollowStart",
+     "parameter_enable": 1,
+     "saved_attribute_attributes": {
+      "valueof": {
+       "parameter_longname": "FollowStart",
+       "parameter_shortname": "FollowStart",
+       "parameter_type": 0,
+       "parameter_mmin": 0.0,
+       "parameter_mmax": 1000000.0,
+       "parameter_initial_enable": 1,
+       "parameter_initial": [
+        0
+       ],
+       "parameter_invisible": 1,
+       "parameter_unitstyle": 0
+      }
+     }
+    }
+   },
+   {
+    "box": {
+     "id": "obj-fend",
+     "maxclass": "live.numbox",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "patching_rect": [
+      620,
+      280,
+      60,
+      15
+     ],
+     "outlettype": [
+      "",
+      "float"
+     ],
+     "varname": "FollowEnd",
+     "parameter_enable": 1,
+     "saved_attribute_attributes": {
+      "valueof": {
+       "parameter_longname": "FollowEnd",
+       "parameter_shortname": "FollowEnd",
+       "parameter_type": 0,
+       "parameter_mmin": 0.0,
+       "parameter_mmax": 1000000.0,
+       "parameter_initial_enable": 1,
+       "parameter_initial": [
+        0
+       ],
+       "parameter_invisible": 1,
+       "parameter_unitstyle": 0
+      }
+     }
+    }
+   },
+   {
+    "box": {
+     "id": "obj-fbpm",
+     "maxclass": "live.numbox",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "patching_rect": [
+      620,
+      310,
+      60,
+      15
+     ],
+     "outlettype": [
+      "",
+      "float"
+     ],
+     "varname": "FollowBpm",
+     "parameter_enable": 1,
+     "saved_attribute_attributes": {
+      "valueof": {
+       "parameter_longname": "FollowBpm",
+       "parameter_shortname": "FollowBpm",
+       "parameter_type": 0,
+       "parameter_mmin": 0.0,
+       "parameter_mmax": 999.0,
+       "parameter_initial_enable": 1,
+       "parameter_initial": [
+        0
+       ],
+       "parameter_invisible": 1,
+       "parameter_unitstyle": 0
+      }
+     }
+    }
+   },
+   {
+    "box": {
+     "id": "obj-route",
+     "maxclass": "newobj",
+     "numinlets": 1,
+     "numoutlets": 4,
+     "patching_rect": [
+      620,
+      220,
+      110,
+      22
+     ],
+     "outlettype": [
+      "",
+      "",
+      "",
+      ""
+     ],
+     "text": "route start end bpm"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-pstart",
+     "maxclass": "newobj",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "patching_rect": [
+      700,
+      250,
+      80,
+      22
+     ],
+     "outlettype": [
+      ""
+     ],
+     "text": "prepend fstart"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-pend",
+     "maxclass": "newobj",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "patching_rect": [
+      700,
+      280,
+      80,
+      22
+     ],
+     "outlettype": [
+      ""
+     ],
+     "text": "prepend fend"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-pbpm",
+     "maxclass": "newobj",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "patching_rect": [
+      700,
+      310,
+      80,
+      22
+     ],
+     "outlettype": [
+      ""
+     ],
+     "text": "prepend fbpm"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-pfollow",
+     "maxclass": "newobj",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "patching_rect": [
+      460,
+      90,
+      90,
+      22
+     ],
+     "outlettype": [
+      ""
+     ],
+     "text": "prepend followon"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-init",
+     "maxclass": "message",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "patching_rect": [
+      700,
+      150,
+      40,
+      22
+     ],
+     "outlettype": [
+      ""
+     ],
+     "text": "init"
     }
    },
    {
@@ -280,24 +512,6 @@
    },
    {
     "box": {
-     "id": "obj-tempomsg",
-     "maxclass": "message",
-     "numinlets": 2,
-     "numoutlets": 1,
-     "patching_rect": [
-      460,
-      120,
-      90,
-      22
-     ],
-     "outlettype": [
-      ""
-     ],
-     "text": "writetempo"
-    }
-   },
-   {
-    "box": {
      "id": "obj-node",
      "maxclass": "newobj",
      "numinlets": 1,
@@ -320,7 +534,7 @@
      "id": "obj-js",
      "maxclass": "newobj",
      "numinlets": 1,
-     "numoutlets": 3,
+     "numoutlets": 4,
      "patching_rect": [
       300,
       280,
@@ -328,6 +542,7 @@
       22
      ],
      "outlettype": [
+      "",
       "",
       "",
       ""
@@ -511,7 +726,7 @@
       0
      ],
      "destination": [
-      "obj-tempomsg",
+      "obj-pfollow",
       0
      ]
     }
@@ -543,7 +758,7 @@
    {
     "patchline": {
      "source": [
-      "obj-tempomsg",
+      "obj-pfollow",
       0
      ],
      "destination": [
@@ -608,6 +823,150 @@
      ],
      "destination": [
       "obj-node",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-thisdev",
+      0
+     ],
+     "destination": [
+      "obj-init",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-init",
+      0
+     ],
+     "destination": [
+      "obj-js",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-js",
+      3
+     ],
+     "destination": [
+      "obj-route",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-route",
+      0
+     ],
+     "destination": [
+      "obj-fstart",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-route",
+      1
+     ],
+     "destination": [
+      "obj-fend",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-route",
+      2
+     ],
+     "destination": [
+      "obj-fbpm",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-fstart",
+      0
+     ],
+     "destination": [
+      "obj-pstart",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-fend",
+      0
+     ],
+     "destination": [
+      "obj-pend",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-fbpm",
+      0
+     ],
+     "destination": [
+      "obj-pbpm",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pstart",
+      0
+     ],
+     "destination": [
+      "obj-js",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pend",
+      0
+     ],
+     "destination": [
+      "obj-js",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pbpm",
+      0
+     ],
+     "destination": [
+      "obj-js",
       0
      ]
     }

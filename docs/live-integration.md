@@ -35,27 +35,27 @@ For a section starting at arrangement beat `S`:
 - a name cue is skipped if it would start before the previous section starts (very short sections)
 
 ## Tempo
-The LOM has no function to write arrangement automation. Three modes (`tempoMode`):
+The LOM has no function to write arrangement automation, and arrangement clip envelopes can only modulate.
+Three modes (`tempoMode`):
 
-### `file` (default): Write Tempo edits the saved set
-1. After each build the device queues `{start, end, bpm, song, sections}` in `tempo_queue.json`.
-   `start` is the bar line of the first cue or the song start, whichever is earlier; `end` is the end of the last section clip.
-2. **Write Tempo** reads `song.file_path`. An unsaved set is refused.
-3. `aicb_tempo.py` checks that the saved file contains the song file and all its section clips.
-   If not, you saved before building, so it asks you to save first.
-4. It copies the set to `Backup/<name> [date time].als`, then writes into the main track's tempo envelope
-   (creating it if needed). For each song it replaces any points between `start` and `end` with four points:
-   `(start, tempo before)`, `(start, bpm)`, `(end, bpm)`, `(end, tempo after)`. Songs before and after keep theirs.
-   Writing again for the same song gives the same result.
-5. The user reopens the set (File → Open Recent).
+### `follow` (default): Tempo Follow
+- After a build, the device stores its song's range and BPM in three hidden parameters
+  (`FollowStart`, `FollowEnd`, `FollowBpm`; "stored only"), so they're saved with the set and restored when it loads.
+  `start` is the bar line of the first cue or the song start, whichever is earlier; `end` is the end of the last section clip.
+- An observer on `live_set current_song_time` checks every playhead update. When the playhead **enters** the range
+  (`start − 0.25 beat` up to `end`, from outside it, including jumps), the device sets `song.tempo` to the song's BPM.
+  The Live API doesn't allow changes inside a notification, so the change is deferred with a `Task`.
+- It acts only on entering, so a tempo change made mid-song is kept. The **Tempo Follow** switch (saved with the set) turns it off.
+- The 0.25-beat lookahead covers the notification interval (roughly 50 ms).
+- Limits: it overrides any tempo automation in the set (Live shows Re-Enable Automation), and an offline export may not follow it.
 
 ### `record`: real-time recording in Live
-Playback runs from one bar before `start`. At `start` the device punches in (Automation Arm + Arrangement Record)
-and sets `song.tempo`; at the song end it punches out. All armed tracks are disarmed during the take and restored afterwards.
-Live returns to the previous tempo after punch-out. This plays the song once, and pressing Stop cancels.
+At the end of a build, playback runs from one bar before `start`. At `start` the device punches in (Automation Arm +
+Arrangement Record) and sets `song.tempo`; at the song end it punches out. Armed tracks are disarmed during the take and
+restored afterwards. This plays the song once, and pressing Stop cancels.
 
 ### `set`
-Just sets `song.tempo`, with no automation.
+Just sets `song.tempo` once, with no automation.
 
 ## Progress bar
 A `[jsui]` (`aicb_progress.js`) draws the bar; `aicb_live.js` sends it 0–100 from the `PERCENT` lines relayed

@@ -32,8 +32,10 @@ function resolve(p) {
 }
 function pathOf(o) { const i = song.tracks.indexOf(o); return i >= 0 ? '"live_set tracks ' + i + '"' : '"id ' + o.id + '"'; }
 
+const observers = [];
 class LiveAPI {
-  constructor(cb, p) { this.o = resolve(p); this.id = this.o.id; this.path = pathOf(this.o); }
+  constructor(cb, p) { this.o = resolve(p); this.id = this.o.id; this.path = pathOf(this.o); this.cb = cb; }
+  set property(name) { observers.push({ api: this, name }); }
   get(prop) {
     const o = this.o;
     const ids = list => list.flatMap(x => ["id", x.id]);
@@ -87,7 +89,7 @@ class Task { constructor(fn, ctx) { this.fn = fn; this.interval = 0; this.h = nu
 
 const status = [];
 const ctx = { LiveAPI, Task, post: s => process.stdout.write("  post: " + s),
-  outlet: (n, ...a) => { if (n === 2) return; if (n === 1) status.push(a.slice(1).join(" ")); else if (a[0] === "analyze") onAnalyze(a.slice(1).join(" "));
+  outlet: (n, ...a) => { if (n === 2 || n === 3) return; if (n === 1) status.push(a.slice(1).join(" ")); else if (a[0] === "analyze") onAnalyze(a.slice(1).join(" "));
     else if (a[0] === "queuetempo") { node.queueTempo(JSON.parse(a[1])); console.log("QUEUED", a[1].slice(0, 120)); }
     else if (a[0] === "writetempo") node.writeTempo(a[1]); },
   arrayfromargs: args => Array.prototype.slice.call(args), console };
@@ -98,7 +100,7 @@ vm.runInContext(fs.readFileSync(path.join(ROOT, "device", "aicb_live.js"), "utf8
 const result = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const cueDir = process.argv[3];
 function onAnalyze(file) {
-  const plan = node.makePlan(result, { cueDir, leadBars: 2, counts: true, recordTempo: true, tempoMode: process.env.TEMPO_MODE || "file" });
+  const plan = node.makePlan(result, { cueDir, leadBars: 2, counts: true, recordTempo: true, tempoMode: process.env.TEMPO_MODE || "follow" });
   setTimeout(() => ctx.plan(JSON.stringify(plan)), 5);
 }
 ctx.build();
@@ -117,6 +119,27 @@ setTimeout(() => {
   setTimeout(() => {
     console.log("\nRE-RUN tracks:", song.tracks.map(t => t.name).join(" | "), "| sections:", song.tracks.find(t => t.name === "SECTIONS").clips.length, "cues:", song.tracks.find(t => t.name === "GUIDE CUES").clips.length);
     console.log(status[status.length - 1]);
-    if (process.env.SET_PATH) { ctx.writetempo(); setTimeout(() => process.exit(0), 3000); } else process.exit(0);
+    sweep().then(() => process.exit(0));
   }, 9000);
 }, 9000);
+
+// ---- tempo follow: move the playhead through the set like Live does and watch the tempo
+async function sweep() {
+  ctx.init();
+  song.is_playing = 1;
+  const changes = [];
+  for (let pos = 0; pos <= 700; pos += 0.125) {          // ~one notification per 50 ms at 150 BPM
+    const before = song.tempo;
+    song.current_song_time = pos;
+    observers.filter(o => o.name === "current_song_time").forEach(o => o.api.cb(["current_song_time", pos]));
+    await new Promise(r => setTimeout(r, 0));
+    if (song.tempo !== before) changes.push([pos, before, song.tempo]);
+    if (pos === 300) song.tempo = 120;                     // someone changes the tempo mid-song (kept)
+    if (pos === 650) { song.current_song_time = 100; observers.forEach(o => o.api.cb(["current_song_time", 100]));
+                       await new Promise(r => setTimeout(r, 0)); changes.push(["jump back to 100 ->", song.tempo]); }
+  }
+  console.log("\nFOLLOW: tempo changes during playback [beat, from, to]:", JSON.stringify(changes));
+  ctx.followon(0); song.tempo = 99; ctx.checkPos(200);
+  await new Promise(r => setTimeout(r, 5));
+  console.log("FOLLOW off -> tempo untouched:", song.tempo === 99);
+}
