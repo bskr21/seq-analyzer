@@ -1,6 +1,7 @@
 # Configuration
 
-Settings live in `~/Library/Application Support/AICueBuilder/config.json`. The file is created when you first choose a cue folder.
+Settings live in `~/Library/Application Support/AICueBuilder/config.json`.
+(The support folder keeps the tool's first name, AI Cue Builder, so existing installs keep their models.) The file is created when you first choose a cue folder.
 
 ```json
 {
@@ -30,4 +31,4 @@ Changes take effect on the next run, so there's no need to reload the device.
 | `~/Library/Application Support/AICueBuilder/engine` | Analysis engine |
 | `~/Library/Caches/AICueBuilder` | Separated stems and spectrograms (safe to delete) |
 | `~/.cache/huggingface`, `~/.cache/torch` | Downloaded AI models |
-| `User Library/Presets/Audio Effects/Max Audio Effect/AI Cue Builder` | The device |
+| `User Library/Presets/Audio Effects/Max Audio Effect/Sequencer Analyzer` | The device (Browser → Max for Live) |

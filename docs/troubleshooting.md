@@ -10,7 +10,8 @@
 | `No cue file for: …` | No file matching that label | Add a file named `… - <Label>.wav`, see [cue-packs.md](cue-packs.md) |
 | `Tempo not recorded (transport did not start)` | Playback didn't start within 10 s | Turn off Count-In and click **Re-record Tempo**, or draw the step by hand |
 | `Tempo drifts …` | Song isn't steady | Check the grid by ear; manual warp markers may be needed |
-| Device won't load / shows an empty box | `.amxd` not accepted | Drop an empty Max Audio Effect, open it in Max, open `AI Cue Builder.maxpat`, copy everything into it, then save it next to the two `.js` files |
+| Device won't load / shows an empty box | `.amxd` not accepted | Drop an empty Max Audio Effect, open it in Max, open `Sequencer Analyzer.maxpat`, copy everything into it, then save it next to the two `.js` files |
+| Buttons do nothing (v0.1.0) | Button clicks were filtered out | Update to v0.1.1 and re-run `setup.command` |
 | `setup.command` "can't be opened" | macOS Gatekeeper | Right-click → Open, or run `bash setup.command` in Terminal |
 
-The Max window (Max editor → Window → Max Console) shows every `AICB:` message and any Live API error.
+The Max window (Max editor → Window → Max Console) shows every `SeqAnalyzer:` message and any Live API error.

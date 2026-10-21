@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AI Cue Builder - analysis engine.
+"""Sequencer Analyzer - analysis engine.
 
 Usage:  aicb_analyze.py <audio file> [--out result.json] [--engine auto|allin1|heuristic]
 

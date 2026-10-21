@@ -1,12 +1,13 @@
 #!/bin/bash
-# AI Cue Builder - one-time setup for macOS (Apple Silicon or Intel).
+# Sequencer Analyzer - one-time setup for macOS (Apple Silicon or Intel).
 # Installs the analysis engine into ~/Library/Application Support/AICueBuilder
 # and the Max for Live device into your Ableton User Library.
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 APP="$HOME/Library/Application Support/AICueBuilder"
-DEVICE_DIR="$HOME/Music/Ableton/User Library/Presets/Audio Effects/Max Audio Effect/AI Cue Builder"
-echo "== AI Cue Builder setup =="
+DEVICE_DIR="$HOME/Music/Ableton/User Library/Presets/Audio Effects/Max Audio Effect/Sequencer Analyzer"
+OLD_DEVICE_DIR="$HOME/Music/Ableton/User Library/Presets/Audio Effects/Max Audio Effect/AI Cue Builder"
+echo "== Sequencer Analyzer setup =="
 
 mkdir -p "$APP/engine"
 cp "$HERE/engine/aicb_analyze.py" "$APP/engine/"
@@ -56,9 +57,9 @@ EOF
 
 echo "-- installing the device"
 mkdir -p "$DEVICE_DIR"
-cp "$HERE/device/AI Cue Builder.amxd" "$HERE/device/aicb_live.js" "$HERE/device/aicb_node.js" "$DEVICE_DIR/"
+rm -rf "$OLD_DEVICE_DIR"   # earlier name of this device (v0.1.0)
+cp "$HERE/device/Sequencer Analyzer.amxd" "$HERE/device/aicb_live.js" "$HERE/device/aicb_node.js" "$DEVICE_DIR/"
 
 echo
-echo "Done. In Live: Browser > Audio Effects > Max Audio Effect > AI Cue Builder"
-echo "(or Places > User Library > Presets > Audio Effects > Max Audio Effect)."
+echo "Done. In Live: Browser > Max for Live > Sequencer Analyzer"
 read -n 1 -s -r -p "Press any key to close."

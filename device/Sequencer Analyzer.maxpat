@@ -82,7 +82,7 @@
       200,
       20
      ],
-     "text": "AI CUE BUILDER",
+     "text": "SEQUENCER ANALYZER",
      "presentation": 1,
      "presentation_rect": [
       8,
@@ -221,63 +221,6 @@
        "parameter_invisible": 1
       }
      }
-    }
-   },
-   {
-    "box": {
-     "id": "obj-sel1",
-     "maxclass": "newobj",
-     "numinlets": 2,
-     "numoutlets": 2,
-     "patching_rect": [
-      120,
-      90,
-      40,
-      22
-     ],
-     "outlettype": [
-      "",
-      ""
-     ],
-     "text": "sel 1"
-    }
-   },
-   {
-    "box": {
-     "id": "obj-sel2",
-     "maxclass": "newobj",
-     "numinlets": 2,
-     "numoutlets": 2,
-     "patching_rect": [
-      300,
-      90,
-      40,
-      22
-     ],
-     "outlettype": [
-      "",
-      ""
-     ],
-     "text": "sel 1"
-    }
-   },
-   {
-    "box": {
-     "id": "obj-sel3",
-     "maxclass": "newobj",
-     "numinlets": 2,
-     "numoutlets": 2,
-     "patching_rect": [
-      460,
-      90,
-      40,
-      22
-     ],
-     "outlettype": [
-      "",
-      ""
-     ],
-     "text": "sel 1"
     }
    },
    {
@@ -504,18 +447,6 @@
       0
      ],
      "destination": [
-      "obj-sel1",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-sel1",
-      0
-     ],
-     "destination": [
       "obj-dialog",
       0
      ]
@@ -540,18 +471,6 @@
       0
      ],
      "destination": [
-      "obj-sel2",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-sel2",
-      0
-     ],
-     "destination": [
       "obj-buildmsg",
       0
      ]
@@ -561,18 +480,6 @@
     "patchline": {
      "source": [
       "obj-tempobtn",
-      0
-     ],
-     "destination": [
-      "obj-sel3",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "obj-sel3",
       0
      ],
      "destination": [

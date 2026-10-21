@@ -2,7 +2,7 @@
 
 ```
 ┌──────────────────── Ableton Live 12 ────────────────────┐
-│  AI Cue Builder.amxd  (Max Audio Effect on song track)  │
+│  Sequencer Analyzer.amxd (Max Audio Effect, song track) │
 │                                                         │
 │  [buttons] ──► aicb_live.js  ◄──────► aicb_node.js      │
 │                (Max [js], Live API)    (Node for Max)   │
@@ -18,7 +18,7 @@
 
 | File | Runs in | Job |
 |---|---|---|
-| `device/AI Cue Builder.amxd` | Live (Max for Live) | UI: Choose Cue Folder, Analyze & Build, Re-record Tempo, status line. Audio passes through untouched (`plugin~` → `plugout~`). |
+| `device/Sequencer Analyzer.amxd` | Live (Max for Live) | UI: Choose Cue Folder, Analyze & Build, Re-record Tempo, status line. Audio passes through untouched (`plugin~` → `plugout~`). |
 | `device/aicb_live.js` | Max `[js]` (classic ES5) | Everything that touches the Live Set through the Live Object Model (LOM). |
 | `device/aicb_node.js` | Node for Max | Runs the Python engine, reads progress, matches cue files to section labels, builds the **plan**. |
 | `engine/aicb_analyze.py` | Python 3.11 venv | Beat/tempo grid and section detection → JSON. |

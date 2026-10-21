@@ -1,4 +1,4 @@
-# seq-analyzer: AI Cue Builder for Ableton Live
+# Sequencer Analyzer for Ableton Live
 
 A Max for Live device that prepares a worship/playback **sequence** in one click. You drop a song
 into Live's Arrangement and press **Analyze & Build**. The device then:
@@ -10,7 +10,7 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
 5. Creates a **GUIDE CUES** audio track with spoken cues from your own cue pack: the section name
    two bars ahead, then "1 2 3 4" in the bar before the section.
 
-> Status: **v0.1, first prototype.** Tested against a simulated Live API and real song analysis,
+> Status: **v0.1.1, first prototype.** Tested against a simulated Live API and real song analysis,
 > but not yet run inside Live itself. See [Known limitations](#known-limitations).
 
 ## Requirements
@@ -25,12 +25,13 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
    - installs [uv](https://github.com/astral-sh/uv) and a private Python 3.11 in
      `~/Library/Application Support/AICueBuilder/venv`
    - installs the analysis engine and downloads the AI models
-   - copies the device to `User Library/Presets/Audio Effects/Max Audio Effect/AI Cue Builder/`
+   - copies the device to `User Library/Presets/Audio Effects/Max Audio Effect/Sequencer Analyzer/`,
+     which Live lists under **Browser → Max for Live**
    - runs a self-test (a synthetic 120 BPM click should read as 120 BPM)
 
 ## Use
 1. Drag the song onto an **audio track** in Arrangement View, starting on a bar line.
-2. Drop **AI Cue Builder** on that same track.
+2. Drop **Sequencer Analyzer** (Browser → Max for Live) on that same track.
 3. First time: **Choose Cue Folder** → select your cue pack folder.
 4. **Turn off Count-In**, then click **Analyze & Build**. The status line reports progress.
    At the end Live plays about one bar while it records the tempo step, then stops.

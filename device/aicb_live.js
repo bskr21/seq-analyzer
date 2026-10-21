@@ -1,4 +1,4 @@
-// AI Cue Builder - Live API side (Max [js] object, classic ES5 JavaScript).
+// Sequencer Analyzer - Live API side (Max [js] object, classic ES5 JavaScript).
 // Outlet 0 -> node.script (analyze requests), outlet 1 -> status text.
 autowatch = 1;
 inlets = 1;
@@ -14,7 +14,7 @@ var CUE_COLOR = 0xD08AE0;
 
 var state = null;   // per-run data
 
-function say(msg) { outlet(1, "set", msg); post("AICB: " + msg + "\n"); }
+function say(msg) { outlet(1, "set", msg); post("SeqAnalyzer: " + msg + "\n"); }
 function fail(msg) { say("Error: " + msg); state = null; }
 
 // ------------------------------------------------------------------ LiveAPI helpers
@@ -219,7 +219,7 @@ function makeCues() {
       t.call("create_audio_clip", list[k].path, list[k].pos);
       var c = clipAt(t, list[k].pos);
       if (c) { made.push({ id: c.id, item: list[k] }); c.set("warping", 0); }
-    } catch (e) { post("AICB: cue failed " + list[k].path + " " + e + "\n"); }
+    } catch (e) { post("SeqAnalyzer: cue failed " + list[k].path + " " + e + "\n"); }
   }
   later(function () {           // warping change is deferred by Live - trim afterwards
     for (var m = 0; m < made.length; m++) {

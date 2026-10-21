@@ -1,4 +1,4 @@
-// AI Cue Builder - Node for Max side.
+// Sequencer Analyzer - Node for Max side.
 // Runs the Python analysis engine, matches cue samples to section labels,
 // and hands a finished build plan to aicb_live.js.
 const path = require("path");

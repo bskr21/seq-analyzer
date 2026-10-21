@@ -1,4 +1,4 @@
-"""Generate 'AI Cue Builder.amxd' (Max for Live audio effect) and a .maxpat copy."""
+"""Generate 'Sequencer Analyzer.amxd' (Max for Live audio effect) and a .maxpat copy."""
 import json, struct, sys, os
 
 out_dir = sys.argv[1] if len(sys.argv) > 1 else "."
@@ -38,24 +38,22 @@ wire("obj-in", 0, "obj-out", 0)
 wire("obj-in", 1, "obj-out", 1)
 
 # title
-box("obj-title", "comment", [120, 20, 200, 20], "AI CUE BUILDER", ins=1, outs=0,
+box("obj-title", "comment", [120, 20, 200, 20], "SEQUENCER ANALYZER", ins=1, outs=0,
     pres=[8, 4, 220, 18], fontface=1, fontsize=12.0)
 
 # buttons
 button("obj-cuebtn", [120, 60, 120, 18], "Choose Cue Folder", [8, 26, 128, 20], "CueFolder")
 button("obj-buildbtn", [300, 60, 120, 18], "Analyze & Build", [142, 26, 128, 20], "Build")
 button("obj-tempobtn", [460, 60, 120, 18], "Re-record Tempo", [276, 26, 110, 20], "Tempo")
-box("obj-sel1", "newobj", [120, 90, 40, 22], "sel 1", ins=2, outs=2)
-box("obj-sel2", "newobj", [300, 90, 40, 22], "sel 1", ins=2, outs=2)
-box("obj-sel3", "newobj", [460, 90, 40, 22], "sel 1", ins=2, outs=2)
+# live.text in button mode sends a bang from its left outlet on click
 box("obj-dialog", "newobj", [120, 120, 100, 22], "opendialog fold", ins=1, outs=2)
 box("obj-prep", "newobj", [120, 150, 120, 22], "prepend setcuedir", ins=1, outs=1)
 box("obj-buildmsg", "message", [300, 120, 50, 22], "build", ins=2, outs=1)
 box("obj-tempomsg", "message", [460, 120, 90, 22], "recordtempo", ins=2, outs=1)
-wire("obj-cuebtn", 0, "obj-sel1", 0); wire("obj-sel1", 0, "obj-dialog", 0)
+wire("obj-cuebtn", 0, "obj-dialog", 0)
 wire("obj-dialog", 0, "obj-prep", 0)
-wire("obj-buildbtn", 0, "obj-sel2", 0); wire("obj-sel2", 0, "obj-buildmsg", 0)
-wire("obj-tempobtn", 0, "obj-sel3", 0); wire("obj-sel3", 0, "obj-tempomsg", 0)
+wire("obj-buildbtn", 0, "obj-buildmsg", 0)
+wire("obj-tempobtn", 0, "obj-tempomsg", 0)
 
 # engines
 box("obj-node", "newobj", [120, 220, 260, 22], "node.script aicb_node.js @autostart 1 @watch 0", ins=1, outs=2)
@@ -96,6 +94,6 @@ patcher = {"patcher": {
 js = (json.dumps(patcher, indent=1) + "\n").encode("utf-8") + b"\x00"
 amxd = b"ampf" + struct.pack("<I", 4) + b"aaaa" + b"meta" + struct.pack("<I", 4) + b"\x00\x00\x00\x00" + \
        b"ptch" + struct.pack("<I", len(js)) + js
-open(os.path.join(out_dir, "AI Cue Builder.amxd"), "wb").write(amxd)
-open(os.path.join(out_dir, "AI Cue Builder.maxpat"), "w").write(json.dumps(patcher, indent=1))
+open(os.path.join(out_dir, "Sequencer Analyzer.amxd"), "wb").write(amxd)
+open(os.path.join(out_dir, "Sequencer Analyzer.maxpat"), "w").write(json.dumps(patcher, indent=1))
 print("ok", len(amxd), "bytes,", len(boxes), "objects,", len(lines), "wires")
