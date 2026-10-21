@@ -27,13 +27,21 @@ function fmtEta(sec) {
   return " - about " + Math.round(sec / 60) + " min left";
 }
 function songTag() { return state && state.songs && state.songs.length > 1 ? "Song " + (state.idx + 1) + "/" + state.songs.length + ": " : ""; }
-// from node.script: progress <percent> <eta seconds>; with several songs the bar covers all of them
+// from node.script: progress <percent> <eta seconds> for the current song.
+// With several songs, bar and text show the overall percentage and the time left for all of them.
 function progress(pct, eta) {
-  var n = state && state.songs ? state.songs.length : 1, i = state && state.songs ? state.idx : 0;
-  bar((i * 100 + Number(pct)) / n);
+  pct = Number(pct); eta = Number(eta);
+  var n = state && state.songs ? state.songs.length : 1, i = state && state.songs ? Math.max(0, state.idx) : 0;
+  var overall = (i * 100 + pct) / n;
+  if (n > 1 && eta >= 0) {
+    var cur = (Date.now() - state.songT0) / 1000;                // this song so far
+    var done = state.doneSecs.length ? state.doneSecs.reduce(function (a, b) { return a + b; }, 0) / state.doneSecs.length : cur + eta;
+    eta = eta + (n - i - 1) * done;                               // remaining songs at the average speed
+  }
+  bar(overall);
   var base = lastText.replace(/ \(\d+%.*$/, "");
   lastText = base;
-  outlet(1, "set", base + " (" + Math.round(pct) + "%" + fmtEta(eta) + ")");
+  outlet(1, "set", base + " (" + Math.round(overall) + "%" + fmtEta(eta) + ")");
 }
 function fail(msg) { say("Error: " + msg); state = null; }
 
@@ -70,23 +78,25 @@ function build() {
     var c = byId(ids[i]);
     if (num(c, "is_audio_clip") != 1) continue;
     var len = num(c, "sample_length") / Math.max(1, num(c, "sample_rate"));
-    if (len >= MIN_SONG_SECONDS) songs.push({ id: c.id, start: num(c, "start_time"), file: str(c, "file_path") });
+    if (len >= MIN_SONG_SECONDS) songs.push({ id: c.id, start: num(c, "start_time"), file: str(c, "file_path"), clip: str(c, "name") });
   }
   if (!songs.length) { fail("drag the song(s) into this track's Arrangement first"); return; }
   songs.sort(function (a, b) { return a.start - b.start; });
   if (songs.length > MAX_SONGS) songs = songs.slice(0, MAX_SONGS);
-  state = { busy: true, track: tr, songs: songs, idx: -1, results: [] };
+  state = { busy: true, track: tr, songs: songs, idx: -1, results: [], doneSecs: [] };
   bar(0);
   nextSong();
 }
 
 function nextSong() {
+  if (state.idx >= 0 && state.songT0) state.doneSecs.push((Date.now() - state.songT0) / 1000);
   state.idx++;
   if (state.idx >= state.songs.length) { finishAll(); return; }
   var s = state.songs[state.idx];
-  state.cur = { clipId: s.id, file: s.file, name: baseName(s.file) };
+  state.songT0 = Date.now();
+  state.cur = { clipId: s.id, file: s.file, name: baseName(s.file), clip: s.clip };
   say(songTag() + "analyzing " + state.cur.name + " (first run can take a few minutes)");
-  outlet(0, "analyze", s.file);
+  outlet(0, "analyze", JSON.stringify({ file: s.file, clip: s.clip }));
 }
 
 function failed() {               // analysis of one song failed: report it and carry on
@@ -302,20 +312,24 @@ function recordTempo(done) {
 
 // ------------------------------------------------------------------ done
 function finishAll() {
-  var parts = [], notes = [], ok = [];
+  var parts = [], notes = [], ok = [], unhinted = [];
   for (var i = 0; i < state.results.length; i++) {
     var r = state.results[i];
     if (r.error) { notes.push(r.name + ": " + r.error.replace(/^.*Error: /, "")); continue; }
     var p = r.plan;
     ok.push(r);
-    parts.push(r.name.replace(/\.[^.]*$/, "") + " " + p.bpm + " BPM, " + r.nSections + " sections, " + r.nCues + " cues");
-    if (p.note) notes.push(r.name + ": " + p.note);
+    parts.push(r.name.replace(/\.[^.]*$/, "") + " " + p.bpm + " BPM" + (p.bpm_hint ? "" : " (detected)") + ", " +
+               r.nSections + " sections, " + r.nCues + " cues");
+    if (!p.bpm_hint) unhinted.push(r.clip || r.name);
+    if (p.note) post("SeqAnalyzer: " + r.name + ": " + p.note + "\n");   // details in the Max console
     if (r.offGrid) notes.push(r.name + ": first downbeat is " + Math.abs(r.offGrid).toFixed(2) +
       " beat " + (r.offGrid > 0 ? "after" : "before") + " a bar line - move the clip to line it up with the grid");
     if (!p.tempo_stable) notes.push(r.name + ": tempo drifts " + p.tempo_range[0] + "-" + p.tempo_range[1] + " BPM, so the grid may wander");
     if (r.tempoNote) notes.push(r.name + ": " + r.tempoNote);
     if (p.missingCues.length) notes.push("no cue file for " + p.missingCues.join(", "));
   }
+  if (unhinted.length) notes.push("If a detected BPM is wrong, put the tempo in the clip name (e.g. \"" +
+    String(unhinted[0]).replace(/\.[^.]*$/, "") + " 74BPM\") and build again");
   if (ok.length && ok[0].plan.recordTempo && ok[0].plan.tempoMode != "record" && ok[0].plan.tempoMode != "set") storeSlots(ok);
   say("Done: " + (parts.length ? parts.join(" | ") : "nothing built") + (notes.length ? ". " + notes.join(". ") : "") +
       (ok.length && follow.on ? ". Tempo Follow is on" : ""));

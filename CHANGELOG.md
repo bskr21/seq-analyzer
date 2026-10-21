@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.0 (2026-10-21)
+- **BPM hint:** a tempo in the clip name, file name or folder (`74BPM`, `F#150`, `E113`…) limits beat tracking to ±6%
+  of it. Fixes 4/3× and 2× errors (a 74 BPM song was detected as 99.44). Renaming the clip is the per-song override;
+  the analysis cache respects it.
+- Progress text and bar now both show the overall percentage across all songs, and the time left for all of them.
+- Final status marks detected tempos and explains how to correct one. Engine notes go to the Max console.
+
 ## v0.5.0 (2026-10-21)
 - **Songs stay unwarped.** The device no longer touches warp markers (Live asked "keep the current timing?" and the
   audio ended up faster). If Live auto-warped a clip, the device turns warping off. Tempo Follow plays each song at

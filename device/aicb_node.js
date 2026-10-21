@@ -141,20 +141,39 @@ function makePlan(result, cfg) {
     first_downbeat: result.first_downbeat, bars: result.bars, duration: result.duration,
     tempo_stable: result.tempo_stable, tempo_range: result.tempo_range, engine: result.engine,
     sections, counts, leadBars: cfg.leadBars, recordTempo: !!cfg.recordTempo, tempoMode: cfg.tempoMode || "follow",
-    note: result.note || "",
+    note: result.note || "", bpm_hint: result.bpm_hint || null,
     missingCues: Array.from(missing)
   };
 }
 
 // ---------------------------------------------------------------- analysis
 let busy = false;
-function analyze(file) {
+// ---------------------------------------------------------------- tempo hint from names
+// "74BPM", "74 bpm", "bpm 74" anywhere; or the key+tempo style "F#150", "E113", "Bbm 72" at the end of a name.
+function bpmFromName(name) {
+  if (!name) return null;
+  const s = String(name).replace(/\.[a-z0-9]{2,4}$/i, "");
+  let m = /(\d{2,3}(?:[.,]\d+)?)\s*-?\s*bpm\b/i.exec(s) || /\bbpm\s*-?\s*(\d{2,3}(?:[.,]\d+)?)/i.exec(s);
+  if (!m) m = /(?:^|[\s_\-(\[])[A-G](?:#|b)?m?\s?(\d{2,3})\s*[)\]]?\s*$/.exec(s);
+  if (!m) return null;
+  const v = parseFloat(m[1].replace(",", "."));
+  return v >= 40 && v <= 250 ? v : null;
+}
+// clip name (the user's override) > file name > parent folders
+function bpmHint(file, clipName) {
+  const parts = [clipName, path.basename(file), path.basename(path.dirname(file)), path.basename(path.dirname(path.dirname(file)))];
+  for (const p of parts) { const v = bpmFromName(p); if (v) return { bpm: v, from: p === clipName ? "clip name" : "\"" + p + "\"" }; }
+  return null;
+}
+
+function analyze(file, hint) {
   return new Promise((resolve, reject) => {
     const cfg = loadConfig();
     if (!fs.existsSync(cfg.python)) return reject(new Error("Analysis engine not installed - run Setup first"));
     const out = path.join(os.tmpdir(), "aicb_" + Date.now() + ".json");
     const args = [cfg.engine, file, "--out", out, "--engine", ["auto", "allin1", "heuristic"].includes(cfg.structure) ? cfg.structure : "auto",
                   "--vocal-threshold", String(cfg.vocalThreshold)];
+    if (hint) args.push("--bpm-hint", String(hint.bpm));
     const p = spawn(cfg.python, args, { env: Object.assign({}, process.env, { PYTHONWARNINGS: "ignore" }) });
     let err = "";
     p.stdout.on("data", () => {});
@@ -180,25 +199,26 @@ function analyze(file) {
 
 // analysis results are cached per file (path, size, date) and per analysis settings
 const ENGINE_VERSION = "0.5";
-function cacheFile(file) {
+function cacheFile(file, hint) {
   const cfg = loadConfig(), st = fs.statSync(file);
-  const key = [ENGINE_VERSION, file, st.size, st.mtimeMs, cfg.structure, cfg.vocalThreshold].join("|");
+  const key = [ENGINE_VERSION, file, st.size, st.mtimeMs, cfg.structure, cfg.vocalThreshold, hint ? hint.bpm : ""].join("|");
   return path.join(os.homedir(), "Library", "Caches", "AICueBuilder", "results",
     require("crypto").createHash("sha1").update(key).digest("hex") + ".json");
 }
 
-async function run(file) {
+async function run(file, clipName) {
   if (busy) return status("Already working...");
   busy = true;
   try {
-    status("analyzing " + path.basename(file) + " ...");
-    const cached = cacheFile(file);
+    const hint = bpmHint(file, clipName);
+    status("analyzing " + path.basename(file) + (hint ? " (tempo hint " + hint.bpm + " BPM from " + hint.from + ")" : "") + " ...");
+    const cached = cacheFile(file, hint);
     let res;
     if (fs.existsSync(cached)) {
       res = JSON.parse(fs.readFileSync(cached, "utf8"));
       if (maxAPI) maxAPI.outlet("progress", 100, 0);
     } else {
-      res = await analyze(file);
+      res = await analyze(file, hint);
       fs.mkdirSync(path.dirname(cached), { recursive: true });
       fs.writeFileSync(cached, JSON.stringify(res));
     }
@@ -212,7 +232,13 @@ async function run(file) {
 }
 
 if (maxAPI) {
-  maxAPI.addHandler("analyze", (...parts) => run(parts.join(" ")));
+  // analyze {"file": ..., "clip": ...}  (older form: analyze <path>)
+  maxAPI.addHandler("analyze", (...parts) => {
+    const txt = parts.join(" ");
+    let o = null;
+    try { o = JSON.parse(txt); } catch (e) {}
+    if (o && o.file) run(o.file, o.clip || ""); else run(txt, "");
+  });
   maxAPI.addHandler("setcuedir", (...parts) => {
     const cfg = loadConfig();
     cfg.cueDir = maxToPosix(parts.join(" "));
@@ -232,4 +258,4 @@ if (maxAPI) {
   });
 }
 
-module.exports = { makePlan, buildCueIndex, findCue, cueKey, audioDuration, maxToPosix };
+module.exports = { bpmFromName, bpmHint, makePlan, buildCueIndex, findCue, cueKey, audioDuration, maxToPosix };

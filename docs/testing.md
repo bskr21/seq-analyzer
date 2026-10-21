@@ -9,6 +9,7 @@
 | NATTEN stand-in vs brute-force neighborhood attention (1D and 2D, with dilation) | max error < 1e-6 |
 | All-In-One network forward pass (random weights) | runs; output shapes correct |
 | Engine stages with a stand-in Demucs (v0.2.0) | stem progress parsed; instrumental track (vocal share 0.1%) → repetition analysis, same labels; vocal track (75%) → AI-model path reuses the stems and extracts spectrograms (model download blocked in the test sandbox) |
+| BPM hint (v0.6.0) | name parsing: `F#150`, `150BPM`, `E113`, `74BPM`, `bpm 72`, `Bbm 72`, `(A 98)` found; `Track 2024`, `Psalm 23`, `GJT.mp3` ignored. On GJT: hint 150 → same result as without; a wrong hint of 112.5 forces 109 BPM, which shows the hint truly constrains the tracker |
 | Two songs on one track (v0.5.0, simulated) | both auto-warped clips set to unwarped; song 1 (150 BPM) sections unchanged; song 2 (74 BPM at beat 600) gets its sections and cues on the same tracks; a 5 s clip is skipped. Tempo Follow: 150 at 63.75, 74 at 591.75 (first cue of song 2), jumping back restores the song's tempo |
 | Tempo Follow (v0.4.0, simulated playhead sweep) | tempo switches 113 → 150 at beat 63.75 (song starts at 64). A manual tempo change mid-song is kept. Jumping back into the song from outside sets 150 again. With Tempo Follow off, the tempo isn't touched |
 | Tempo recording (v0.2.0, simulated) | playback started elsewhere, then jumped; punch-in at the song start (beat 64), value 150, punch-out at the song end |

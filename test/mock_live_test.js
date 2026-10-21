@@ -16,7 +16,7 @@ song.tracks[0].arm = 1;
 const SR = 44100, DUR = 208.192;
 // two songs on one track, both auto-warped by Live on import (the device must switch warping off)
 function mkSong(file, start, dur) {
-  const c = reg({ kind: "clip", audio: 1, file_path: file, start_time: start, start_marker: 0, warping: 1,
+  const c = reg({ kind: "clip", audio: 1, name: file.replace(/^.*\//, "").replace(/\.wav$/, ""), file_path: file, start_time: start, start_marker: 0, warping: 1,
     sample_rate: SR, sample_length: Math.round(dur * SR), loop_start: 0, loop_end: dur, dur });
   c.end_time_fn = x => x.start_time + x.dur * song.tempo / 60;
   songTrack.clips.push(c);
@@ -25,7 +25,7 @@ function mkSong(file, start, dur) {
 const songClip = mkSong("/Users/x/Gelap Jadi Terang F#150.wav", 64, DUR);
 const song2 = mkSong("/Users/x/Kumilikmu.wav", 600, 120);
 songTrack.clips.push(reg({ kind: "clip", audio: 1, file_path: "/Users/x/sfx.wav", start_time: 590, sample_rate: SR,
-  sample_length: 5 * SR, warping: 0, end_time: 592 }));   // a short clip: not a song
+  sample_length: 5 * SR, warping: 0, end_time: 592, name: "sfx" }));   // a short clip: not a song
 function beatAtM(M, t) { M = M.slice().sort((a, b) => a.beat_time - b.beat_time); let i = 0; while (i < M.length - 2 && t > M[i + 1].sample_time) i++;
   const a = M[i], b = M[i + 1]; return a.beat_time + (t - a.sample_time) * (b.beat_time - a.beat_time) / (b.sample_time - a.sample_time); }
 

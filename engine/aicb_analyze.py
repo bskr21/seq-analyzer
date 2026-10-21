@@ -31,18 +31,20 @@ def load_audio(path, sr):
 
 
 # --------------------------------------------------------------------------- beats / tempo
-def track_beats(path):
-    """Return (beat_times, beat_positions) using madmom's downbeat network; librosa fallback."""
+def track_beats(path, hint=None):
+    """Return (beat_times, beat_positions) using madmom's downbeat network; librosa fallback.
+    With a BPM hint the tracker only considers tempi within 6% of it (no 2x, 1/2x or 4/3 errors)."""
+    lo, hi = (hint * 0.94, hint * 1.06) if hint else (55, 215)
     try:
         from madmom.features.downbeats import RNNDownBeatProcessor, DBNDownBeatTrackingProcessor
         act = RNNDownBeatProcessor()(path)
-        res = DBNDownBeatTrackingProcessor(beats_per_bar=[3, 4], fps=100, min_bpm=55, max_bpm=215)(act)
+        res = DBNDownBeatTrackingProcessor(beats_per_bar=[3, 4], fps=100, min_bpm=lo, max_bpm=hi)(act)
         return res[:, 0], res[:, 1].astype(int), "madmom"
     except Exception as e:  # pragma: no cover
         log("madmom unavailable (%s), using librosa beat tracker" % e.__class__.__name__)
         import librosa
         y = load_audio(path, 22050)
-        _, beats = librosa.beat.beat_track(y=y, sr=22050, tightness=300)
+        _, beats = librosa.beat.beat_track(y=y, sr=22050, tightness=300, start_bpm=hint or 120.0)
         bt = librosa.frames_to_time(beats, sr=22050)
         return bt, (np.arange(len(bt)) % 4) + 1, "librosa"
 
@@ -391,6 +393,8 @@ def main():
     ap.add_argument("audio")
     ap.add_argument("--out")
     ap.add_argument("--engine", default="auto", choices=["auto", "allin1", "heuristic"])
+    ap.add_argument("--bpm-hint", type=float, default=None,
+                    help="expected tempo (from the file/clip name); detection stays within 6%% of it")
     ap.add_argument("--vocal-threshold", type=float, default=0.12,
                     help="below this share of vocal energy the song is treated as instrumental")
     args = ap.parse_args()
@@ -418,7 +422,10 @@ def main():
     duration = sf.info(path).duration
 
     prog.start("beats", "detecting beats and tempo")
-    bt, pos, beat_engine = track_beats(path)
+    hint = args.bpm_hint if args.bpm_hint and 40 <= args.bpm_hint <= 250 else None
+    if hint:
+        log("using tempo hint %g BPM" % hint)
+    bt, pos, beat_engine = track_beats(path, hint)
     grid = fit_grid(bt, pos)
     bar_len = grid["beat_period"] * grid["meter"]
     nbars = int(np.floor((duration - grid["first_downbeat"]) / bar_len + 0.25))
@@ -468,7 +475,7 @@ def main():
         pass
     shutil.rmtree(os.path.join(CACHE, "demix", "htdemucs", base), ignore_errors=True)
     result = dict(file=src, duration=round(duration, 3), beat_engine=beat_engine, engine=engine,
-                  vocal_share=None if vshare is None else round(vshare, 3), note=note,
+                  vocal_share=None if vshare is None else round(vshare, 3), note=note, bpm_hint=hint,
                   bars=nbars, sections=secs, **grid)
     js = json.dumps(result, indent=1)
     if args.out:

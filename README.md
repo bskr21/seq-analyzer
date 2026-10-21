@@ -11,7 +11,7 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
 5. Creates a **GUIDE CUES** audio track with spoken cues from your own cue pack: the section name
    two bars ahead, then "1 2 3 4" in the bar before the section.
 
-> Status: **v0.5.0, prototype.** Tested against a simulated Live API and real song analysis,
+> Status: **v0.6.0, prototype.** Tested against a simulated Live API and real song analysis,
 > but not yet run inside Live itself. See [Known limitations](#known-limitations).
 
 ## Requirements
@@ -41,6 +41,13 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
    (up to 16 per track), including when you jump into the middle. Changes you make to the tempo mid-song are left alone.
 
 Re-building is quick: each song's analysis is cached, so only new or changed files are analyzed again.
+
+### Getting the tempo right
+Beat trackers can lock onto 2×, ½× or 4/3× the real tempo (for example, 99 instead of 74 BPM on a ballad with a
+syncopated feel). If a tempo appears in the **clip name**, the **file name** or a **parent folder**
+(`74BPM`, `74 bpm`, or key+tempo like `F#150`, `E113`), the device searches only within 6% of it. To fix a wrong BPM,
+rename the clip in Live, for example `KUMILIKMU BRIDGE 2X 74BPM`, and press Analyze & Build again. The clip name wins.
+Section detection depends on the bar grid, so a corrected tempo also fixes the sections.
 
 Re-running reuses the SECTIONS / GUIDE CUES tracks and replaces only the analyzed songs' clips.
 
