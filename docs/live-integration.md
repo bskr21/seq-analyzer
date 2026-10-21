@@ -34,20 +34,29 @@ For a section starting at arrangement beat `S`:
 - count cues "1…meter" at `S − meter + i`, each trimmed to one beat
 - a name cue is skipped if it would start before the previous section starts (very short sections)
 
-## Tempo recording
-The LOM has no function to write arrangement automation, so the device records it in real time.
-Step position `P` is the bar line of the first cue or the song start, whichever is earlier. The end `E` is the end of the song clip.
-1. Save the record and Automation Arm states, the loop setting, and which tracks are armed. Disarm all tracks, so no audio or MIDI is recorded.
-2. Turn on Automation Arm with Arrangement Record off, then start playback. `start_playing` starts at the
-   insert marker, so the device then jumps the playhead to one bar before `P`.
-3. Poll every 20 ms. When the playhead reaches `P`, punch in (`record_mode = 1`) and set `song.tempo = bpm`.
-4. At `E`, punch out and stop, then restore everything. The progress bar follows the playhead in the meantime.
+## Tempo
+The LOM has no function to write arrangement automation. Three modes (`tempoMode`):
 
-Live writes the new value only between punch-in and punch-out, then returns to the previous tempo or envelope.
-So in a medley, the songs before and after keep their tempo. Pressing Stop cancels the recording; the tempo is then written only up to that point.
+### `file` (default): Write Tempo edits the saved set
+1. After each build the device queues `{start, end, bpm, song, sections}` in `tempo_queue.json`.
+   `start` is the bar line of the first cue or the song start, whichever is earlier; `end` is the end of the last section clip.
+2. **Write Tempo** reads `song.file_path`. An unsaved set is refused.
+3. `aicb_tempo.py` checks that the saved file contains the song file and all its section clips.
+   If not, you saved before building, so it asks you to save first.
+4. It copies the set to `Backup/<name> [date time].als`, then writes into the main track's tempo envelope
+   (creating it if needed). For each song it replaces any points between `start` and `end` with four points:
+   `(start, tempo before)`, `(start, bpm)`, `(end, bpm)`, `(end, tempo after)`. Songs before and after keep theirs.
+   Writing again for the same song gives the same result.
+5. The user reopens the set (File → Open Recent).
 
-`"tempoMode": "set"` skips the recording and just sets `song.tempo` (no automation). `recordTempo: false` leaves tempo alone.
+### `record`: real-time recording in Live
+Playback runs from one bar before `start`. At `start` the device punches in (Automation Arm + Arrangement Record)
+and sets `song.tempo`; at the song end it punches out. All armed tracks are disarmed during the take and restored afterwards.
+Live returns to the previous tempo after punch-out. This plays the song once, and pressing Stop cancels.
+
+### `set`
+Just sets `song.tempo`, with no automation.
 
 ## Progress bar
-`aicb_live.js` resizes a panel (`progfill`) through `thispatcher` (`script sendbox progfill presentation_rect …`)
-from the `PERCENT` lines relayed by Node, and from the playhead position during tempo recording.
+A `[jsui]` (`aicb_progress.js`) draws the bar; `aicb_live.js` sends it 0–100 from the `PERCENT` lines relayed
+by Node (and from the playhead position in `record` mode).

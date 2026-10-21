@@ -196,7 +196,7 @@
       "",
       ""
      ],
-     "text": "Re-record Tempo",
+     "text": "Write Tempo",
      "presentation": 1,
      "presentation_rect": [
       276,
@@ -205,7 +205,7 @@
       20
      ],
      "mode": 0,
-     "texton": "Re-record Tempo",
+     "texton": "Write Tempo",
      "varname": "Tempo",
      "parameter_enable": 1,
      "saved_attribute_attributes": {
@@ -293,7 +293,7 @@
      "outlettype": [
       ""
      ],
-     "text": "recordtempo"
+     "text": "writetempo"
     }
    },
    {
@@ -393,99 +393,29 @@
    },
    {
     "box": {
-     "id": "obj-progbg",
-     "maxclass": "panel",
+     "id": "obj-progress",
+     "maxclass": "jsui",
      "numinlets": 1,
-     "numoutlets": 0,
+     "numoutlets": 1,
      "patching_rect": [
       480,
       300,
       200,
-      6
+      8
+     ],
+     "outlettype": [
+      ""
      ],
      "presentation": 1,
      "presentation_rect": [
       8,
       54,
       378,
-      6
+      8
      ],
-     "varname": "progbg",
-     "bgcolor": [
-      0.16,
-      0.16,
-      0.16,
-      1.0
-     ],
-     "bgfillcolor_type": "color",
-     "bgfillcolor_color": [
-      0.16,
-      0.16,
-      0.16,
-      1.0
-     ],
-     "border": 0,
-     "rounded": 3,
-     "mode": 0,
+     "filename": "aicb_progress.js",
+     "parameter_enable": 0,
      "ignoreclick": 1
-    }
-   },
-   {
-    "box": {
-     "id": "obj-progfill",
-     "maxclass": "panel",
-     "numinlets": 1,
-     "numoutlets": 0,
-     "patching_rect": [
-      480,
-      310,
-      1,
-      6
-     ],
-     "presentation": 1,
-     "presentation_rect": [
-      8,
-      54,
-      1,
-      6
-     ],
-     "varname": "progfill",
-     "bgcolor": [
-      1.0,
-      0.71,
-      0.2,
-      1.0
-     ],
-     "bgfillcolor_type": "color",
-     "bgfillcolor_color": [
-      1.0,
-      0.71,
-      0.2,
-      1.0
-     ],
-     "border": 0,
-     "rounded": 3,
-     "mode": 0,
-     "ignoreclick": 1
-    }
-   },
-   {
-    "box": {
-     "id": "obj-thispatcher",
-     "maxclass": "newobj",
-     "numinlets": 1,
-     "numoutlets": 2,
-     "patching_rect": [
-      480,
-      320,
-      80,
-      22
-     ],
-     "outlettype": [
-      "",
-      ""
-     ],
-     "text": "thispatcher"
     }
    },
    {
@@ -689,7 +619,7 @@
       2
      ],
      "destination": [
-      "obj-thispatcher",
+      "obj-progress",
       0
      ]
     }
@@ -716,6 +646,12 @@
    },
    {
     "name": "aicb_node.js",
+    "bootpath": ".",
+    "type": "TEXT",
+    "implicit": 1
+   },
+   {
+    "name": "aicb_progress.js",
     "bootpath": ".",
     "type": "TEXT",
     "implicit": 1

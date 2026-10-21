@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0 (2026-10-21)
+- **Write Tempo** (new default): after building, save the set and press Write Tempo. Every analyzed song gets a
+  tempo step from its first cue to the end of its last section, written straight into the saved set in about a second.
+  The device checks that the set was saved after the build and keeps a backup. Reopen the set afterwards.
+  Real-time recording is still available (`"tempoMode": "record"`).
+- **Progress bar** redrawn with `[jsui]`. It stayed dark inside the device in v0.2.0.
+- The **Re-record Tempo** button is now **Write Tempo**.
+
 ## v0.2.0 (2026-10-21)
 - **Progress bar** with percentage and time left. Stem separation reports real progress, the other stages
   are estimated, and estimates learn the machine's speed after the first run. The bar also follows the tempo pass.

@@ -10,7 +10,7 @@ OLD_DEVICE_DIR="$HOME/Music/Ableton/User Library/Presets/Audio Effects/Max Audio
 echo "== Sequencer Analyzer setup =="
 
 mkdir -p "$APP/engine"
-cp "$HERE/engine/aicb_analyze.py" "$APP/engine/"
+cp "$HERE/engine/"*.py "$APP/engine/"
 
 # 1. uv gives us a known-good Python 3.11 without touching your system Python
 export PATH="$HOME/.local/bin:$PATH"
@@ -55,10 +55,13 @@ subprocess.run([sys.executable, eng, f, "--out", out, "--engine", "heuristic"], 
 r = json.load(open(out)); print("   self-test tempo:", r["bpm"], "BPM (expected 120)")
 EOF
 
+# settings written by v0.1-0.2 contained every default; keep only real choices
+"$PY" "$HERE/engine/migrate_config.py" "$APP/config.json" || true
+
 echo "-- installing the device"
 mkdir -p "$DEVICE_DIR"
 rm -rf "$OLD_DEVICE_DIR"   # earlier name of this device (v0.1.0)
-cp "$HERE/device/Sequencer Analyzer.amxd" "$HERE/device/aicb_live.js" "$HERE/device/aicb_node.js" "$DEVICE_DIR/"
+cp "$HERE/device/Sequencer Analyzer.amxd" "$HERE/device/"*.js "$DEVICE_DIR/"
 
 echo
 echo "Done. In Live: Browser > Max for Live > Sequencer Analyzer"

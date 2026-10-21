@@ -14,7 +14,7 @@ const songTrack = mkTrack("SEQ", true);
 song.tracks.push(mkTrack("1-Click", false), songTrack);
 song.tracks[0].arm = 1;
 const SR = 44100, DUR = 208.192;
-const songClip = reg({ kind: "clip", audio: 1, file_path: "/Users/x/GJT.mp3", start_time: 64, start_marker: 0, warping: 0,
+const songClip = reg({ kind: "clip", audio: 1, file_path: "/Users/x/Gelap Jadi Terang F#150.wav", start_time: 64, start_marker: 0, warping: 0,
   sample_rate: SR, sample_length: Math.round(DUR * SR), markers: [{ sample_time: 0, beat_time: 0 }, { sample_time: 10, beat_time: 24.5 }] });
 songClip.end_time_fn = c => c.start_time + (beatAtM(c.markers, DUR) - c.start_marker);
 songTrack.clips.push(songClip);
@@ -43,6 +43,7 @@ class LiveAPI {
       case "end_time": return [o.end_time_fn ? o.end_time_fn(o) : o.end_time];
       case "is_audio_clip": return [o.audio ? 1 : 0];
       case "warp_markers": return [JSON.stringify({ warp_markers: o.markers })];
+      case "file_path": return [o.file_path !== undefined ? o.file_path : (process.env.SET_PATH || "")];
       default: if (!(prop in o)) throw new Error("no prop " + prop + " on " + o.kind); return [o[prop]];
     }
   }
@@ -86,7 +87,9 @@ class Task { constructor(fn, ctx) { this.fn = fn; this.interval = 0; this.h = nu
 
 const status = [];
 const ctx = { LiveAPI, Task, post: s => process.stdout.write("  post: " + s),
-  outlet: (n, ...a) => { if (n === 2) return; if (n === 1) status.push(a.slice(1).join(" ")); else if (a[0] === "analyze") onAnalyze(a.slice(1).join(" ")); },
+  outlet: (n, ...a) => { if (n === 2) return; if (n === 1) status.push(a.slice(1).join(" ")); else if (a[0] === "analyze") onAnalyze(a.slice(1).join(" "));
+    else if (a[0] === "queuetempo") { node.queueTempo(JSON.parse(a[1])); console.log("QUEUED", a[1].slice(0, 120)); }
+    else if (a[0] === "writetempo") node.writeTempo(a[1]); },
   arrayfromargs: args => Array.prototype.slice.call(args), console };
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(ROOT, "device", "aicb_live.js"), "utf8"), ctx);
@@ -95,7 +98,7 @@ vm.runInContext(fs.readFileSync(path.join(ROOT, "device", "aicb_live.js"), "utf8
 const result = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const cueDir = process.argv[3];
 function onAnalyze(file) {
-  const plan = node.makePlan(result, { cueDir, leadBars: 2, counts: true, recordTempo: true });
+  const plan = node.makePlan(result, { cueDir, leadBars: 2, counts: true, recordTempo: true, tempoMode: process.env.TEMPO_MODE || "file" });
   setTimeout(() => ctx.plan(JSON.stringify(plan)), 5);
 }
 ctx.build();
@@ -114,6 +117,6 @@ setTimeout(() => {
   setTimeout(() => {
     console.log("\nRE-RUN tracks:", song.tracks.map(t => t.name).join(" | "), "| sections:", song.tracks.find(t => t.name === "SECTIONS").clips.length, "cues:", song.tracks.find(t => t.name === "GUIDE CUES").clips.length);
     console.log(status[status.length - 1]);
-    process.exit(0);
+    if (process.env.SET_PATH) { ctx.writetempo(); setTimeout(() => process.exit(0), 3000); } else process.exit(0);
   }, 9000);
 }, 9000);

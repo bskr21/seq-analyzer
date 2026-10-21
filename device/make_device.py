@@ -44,12 +44,12 @@ box("obj-title", "comment", [120, 20, 200, 20], "SEQUENCER ANALYZER", ins=1, out
 # buttons
 button("obj-cuebtn", [120, 60, 120, 18], "Choose Cue Folder", [8, 26, 128, 20], "CueFolder")
 button("obj-buildbtn", [300, 60, 120, 18], "Analyze & Build", [142, 26, 128, 20], "Build")
-button("obj-tempobtn", [460, 60, 120, 18], "Re-record Tempo", [276, 26, 110, 20], "Tempo")
+button("obj-tempobtn", [460, 60, 120, 18], "Write Tempo", [276, 26, 110, 20], "Tempo")
 # live.text in button mode sends a bang from its left outlet on click
 box("obj-dialog", "newobj", [120, 120, 100, 22], "opendialog fold", ins=1, outs=2)
 box("obj-prep", "newobj", [120, 150, 120, 22], "prepend setcuedir", ins=1, outs=1)
 box("obj-buildmsg", "message", [300, 120, 50, 22], "build", ins=2, outs=1)
-box("obj-tempomsg", "message", [460, 120, 90, 22], "recordtempo", ins=2, outs=1)
+box("obj-tempomsg", "message", [460, 120, 90, 22], "writetempo", ins=2, outs=1)
 wire("obj-cuebtn", 0, "obj-dialog", 0)
 wire("obj-dialog", 0, "obj-prep", 0)
 wire("obj-buildbtn", 0, "obj-buildmsg", 0)
@@ -70,13 +70,10 @@ box("obj-delay", "newobj", [600, 180, 70, 22], "delay 2000", ins=2, outs=1)
 box("obj-hello", "message", [600, 210, 50, 22], "hello", ins=2, outs=1)
 wire("obj-thisdev", 0, "obj-delay", 0); wire("obj-delay", 0, "obj-hello", 0); wire("obj-hello", 0, "obj-node", 0)
 
-# progress bar: a track panel and a fill panel resized by aicb_live.js via thispatcher
-box("obj-progbg", "panel", [480, 300, 200, 6], ins=1, outs=0, pres=[8, 54, 378, 6],
-    varname="progbg", bgcolor=[0.16, 0.16, 0.16, 1.0], bgfillcolor_type="color", bgfillcolor_color=[0.16, 0.16, 0.16, 1.0], border=0, rounded=3, mode=0, ignoreclick=1)
-box("obj-progfill", "panel", [480, 310, 1, 6], ins=1, outs=0, pres=[8, 54, 1, 6],
-    varname="progfill", bgcolor=[1.0, 0.71, 0.2, 1.0], bgfillcolor_type="color", bgfillcolor_color=[1.0, 0.71, 0.2, 1.0], border=0, rounded=3, mode=0, ignoreclick=1)
-box("obj-thispatcher", "newobj", [480, 320, 80, 22], "thispatcher", ins=1, outs=2)
-wire("obj-js", 2, "obj-thispatcher", 0)
+# progress bar: custom-drawn [jsui]
+box("obj-progress", "jsui", [480, 300, 200, 8], ins=1, outs=1, pres=[8, 54, 378, 8],
+    filename="aicb_progress.js", parameter_enable=0, ignoreclick=1)
+wire("obj-js", 2, "obj-progress", 0)
 
 # status line
 box("obj-status", "comment", [300, 340, 380, 40], "Ready.", ins=1, outs=0,
@@ -95,7 +92,8 @@ patcher = {"patcher": {
     "boxes": boxes, "lines": lines,
     "dependency_cache": [
         {"name": "aicb_live.js", "bootpath": ".", "type": "TEXT", "implicit": 1},
-        {"name": "aicb_node.js", "bootpath": ".", "type": "TEXT", "implicit": 1}],
+        {"name": "aicb_node.js", "bootpath": ".", "type": "TEXT", "implicit": 1},
+        {"name": "aicb_progress.js", "bootpath": ".", "type": "TEXT", "implicit": 1}],
     "latency": 0, "is_mpe": 0, "external_mpe_tuning_enabled": 0, "minimum_live_version": "",
     "minimum_max_version": "", "platform_compatibility": 0, "autosave": 0}}
 

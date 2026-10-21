@@ -1,5 +1,5 @@
 // Sequencer Analyzer - Live API side (Max [js] object, classic ES5 JavaScript).
-// Outlet 0 -> node.script (analyze requests), 1 -> status text, 2 -> thispatcher (progress bar).
+// Outlet 0 -> node.script, 1 -> status text, 2 -> progress bar ([jsui], 0..100).
 autowatch = 1;
 inlets = 1;
 outlets = 3;
@@ -14,14 +14,10 @@ var CUE_COLOR = 0xD08AE0;
 
 var state = null;   // per-run data
 
-var BAR = { x: 8, y: 54, w: 378, h: 6 };     // progress bar geometry (matches the patch)
 var lastText = "";
 
 function say(msg) { lastText = msg; outlet(1, "set", msg); post("SeqAnalyzer: " + msg + "\n"); }
-function bar(pct) {
-  var w = Math.max(1, Math.round(BAR.w * Math.max(0, Math.min(100, pct)) / 100));
-  outlet(2, "script", "sendbox", "progfill", "presentation_rect", BAR.x, BAR.y, w, BAR.h);
-}
+function bar(pct) { outlet(2, Math.max(0, Math.min(100, Number(pct) || 0))); }
 function fmtEta(sec) {
   if (sec < 0) return "";
   if (sec < 50) return " - about " + Math.max(5, Math.round(sec / 5) * 5) + " s left";
@@ -91,7 +87,14 @@ function plan() {
   warpSong();
 }
 
-function recordtempo() {   // re-run only the tempo step for the last analyzed song
+// "Write Tempo" button: node decides (file mode writes the saved set; record mode calls back "recordtempo")
+function writetempo() {
+  var path = str(api("live_set"), "file_path");
+  if (!path || path == "0") { say("Save the set first (Cmd+S), then press Write Tempo"); return; }
+  outlet(0, "writetempo", path);
+}
+
+function recordtempo() {   // real-time recording for the last analyzed song (tempoMode "record")
   if (!state || !state.plan || state.songStartBeat === undefined) { say("Run Analyze & Build first"); return; }
   if (state.busy) { say("Already working..."); return; }
   state.busy = true;
@@ -215,6 +218,7 @@ function makeSections() {
       c.set("name", s.label);
       c.set("color", COLORS[kindOf(s.label)] || 0x6F8FD8);
       n++;
+      state.lastSectionEnd = b;
     }
   }
   state.nSections = n;
@@ -260,7 +264,7 @@ function makeCues() {
     var first = 1e12;
     for (var q = 0; q < list.length; q++) first = Math.min(first, list[q].pos);
     state.firstCueBeat = first < 1e12 ? first : state.songStartBeat;
-    if (p.recordTempo && p.tempoMode !== "off") recordTempo(finish); else finish();
+    if (p.recordTempo && (p.tempoMode == "record" || p.tempoMode == "set")) recordTempo(finish); else finish();
   }, 400);
 }
 
@@ -334,6 +338,15 @@ function recordTempo(done) {
 function finish() {
   var p = state.plan;
   var msg = "Done: " + p.bpm + " BPM, " + state.nSections + " sections, " + state.nCues + " cues";
+  if (p.recordTempo && p.tempoMode != "record" && p.tempoMode != "set") {
+    // queue this song's tempo step; written into the saved set by Write Tempo
+    var labels = [], seen = {};
+    for (var i = 0; i < p.sections.length; i++) if (!seen[p.sections[i].label]) { seen[p.sections[i].label] = 1; labels.push(p.sections[i].label); }
+    var m = p.meter, P = Math.floor(Math.min(state.firstCueBeat, state.songStartBeat) / m) * m;
+    var name = state.file.replace(/^.*[\/\\]/, "");
+    outlet(0, "queuetempo", JSON.stringify({ start: P, end: state.lastSectionEnd || state.songEndBeat, bpm: p.bpm, song: name, sections: labels }));
+    msg += ". Tempo: save the set (Cmd+S), then press Write Tempo";
+  }
   if (p.note) msg += ". " + p.note.charAt(0).toUpperCase() + p.note.slice(1);
   if (state.tempoNote) msg += ". Note: " + state.tempoNote;
   if (!p.tempo_stable) msg += ". Tempo drifts " + p.tempo_range[0] + "-" + p.tempo_range[1] + " BPM: check the grid";
