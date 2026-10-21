@@ -17,7 +17,10 @@ const DEFAULTS = {
   engine: path.join(SUPPORT, "engine", "aicb_analyze.py"),
   leadBars: 2,          // section-name cue this many bars before the section
   counts: true,         // "1 2 3 4" in the bar before each section
-  recordTempo: true     // record a tempo-automation step at the song start
+  recordTempo: true,    // write tempo automation from the first cue to the end of the song
+  tempoMode: "record",  // "record" = automation (real time, song length) | "set" = just set the tempo
+  structure: "auto",    // section engine: "auto" | "allin1" | "heuristic"
+  vocalThreshold: 0.12  // below this vocal share a song is treated as instrumental
 };
 
 function loadConfig() {
@@ -134,7 +137,8 @@ function makePlan(result, cfg) {
     bpm: result.bpm, meter: result.meter, beat_period: result.beat_period,
     first_downbeat: result.first_downbeat, bars: result.bars, duration: result.duration,
     tempo_stable: result.tempo_stable, tempo_range: result.tempo_range, engine: result.engine,
-    sections, counts, leadBars: cfg.leadBars, recordTempo: !!cfg.recordTempo,
+    sections, counts, leadBars: cfg.leadBars, recordTempo: !!cfg.recordTempo, tempoMode: cfg.tempoMode || "record",
+    note: result.note || "",
     missingCues: Array.from(missing)
   };
 }
@@ -146,12 +150,20 @@ function analyze(file) {
     const cfg = loadConfig();
     if (!fs.existsSync(cfg.python)) return reject(new Error("Analysis engine not installed - run Setup first"));
     const out = path.join(os.tmpdir(), "aicb_" + Date.now() + ".json");
-    const p = spawn(cfg.python, [cfg.engine, file, "--out", out], { env: Object.assign({}, process.env, { PYTHONWARNINGS: "ignore" }) });
+    const args = [cfg.engine, file, "--out", out, "--engine", ["auto", "allin1", "heuristic"].includes(cfg.structure) ? cfg.structure : "auto",
+                  "--vocal-threshold", String(cfg.vocalThreshold)];
+    const p = spawn(cfg.python, args, { env: Object.assign({}, process.env, { PYTHONWARNINGS: "ignore" }) });
     let err = "";
     p.stdout.on("data", () => {});
     p.stderr.on("data", d => {
       err += d.toString();
-      for (const line of d.toString().split("\n")) if (line.startsWith("PROGRESS ")) status(line.slice(9));
+      for (const line of d.toString().split("\n")) {
+        if (line.startsWith("PROGRESS ")) status(line.slice(9));
+        else if (line.startsWith("PERCENT ")) {
+          const [pct, eta] = line.slice(8).trim().split(/\s+/).map(Number);
+          if (maxAPI && !isNaN(pct)) maxAPI.outlet("progress", pct, isNaN(eta) ? -1 : eta);
+        }
+      }
     });
     p.on("error", reject);
     p.on("close", code => {
@@ -189,7 +201,7 @@ if (maxAPI) {
   });
   maxAPI.addHandler("option", (key, val) => {
     const cfg = loadConfig();
-    cfg[key] = typeof DEFAULTS[key] === "boolean" ? !!val : Number(val);
+    cfg[key] = typeof DEFAULTS[key] === "boolean" ? !!val : typeof DEFAULTS[key] === "string" ? String(val) : Number(val);
     saveConfig(cfg);
   });
   maxAPI.addHandler("hello", () => {

@@ -4,13 +4,13 @@ A Max for Live device that prepares a worship/playback **sequence** in one click
 into Live's Arrangement and press **Analyze & Build**. The device then:
 
 1. **Detects the BPM** and bar grid of the song, and locks the clip to that grid with warp markers.
-2. **Records a tempo-automation step** at the start of the song, so the set's tempo follows the song.
+2. **Writes tempo automation** from the first cue to the end of the song, so the set's tempo follows the song.
 3. **Finds the song structure** (Intro, Verse, Chorus, Bridge, Instrumental, Breakdown, Outro…).
 4. Creates a **SECTIONS** MIDI track with one named, colored clip per section.
 5. Creates a **GUIDE CUES** audio track with spoken cues from your own cue pack: the section name
    two bars ahead, then "1 2 3 4" in the bar before the section.
 
-> Status: **v0.1.1, first prototype.** Tested against a simulated Live API and real song analysis,
+> Status: **v0.2.0, prototype.** Tested against a simulated Live API and real song analysis,
 > but not yet run inside Live itself. See [Known limitations](#known-limitations).
 
 ## Requirements
@@ -33,8 +33,8 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
 1. Drag the song onto an **audio track** in Arrangement View, starting on a bar line.
 2. Drop **Sequencer Analyzer** (Browser → Max for Live) on that same track.
 3. First time: **Choose Cue Folder** → select your cue pack folder.
-4. **Turn off Count-In**, then click **Analyze & Build**. The status line reports progress.
-   At the end Live plays about one bar while it records the tempo step, then stops.
+4. Click **Analyze & Build**. A progress bar shows how far along the analysis is and the time left.
+   At the end Live **plays the song once** while it records the tempo automation. Press Stop to cancel.
 
 Re-running on the same song reuses the SECTIONS / GUIDE CUES tracks and replaces only that song's clips.
 **Re-record Tempo** repeats only the tempo step.
@@ -53,11 +53,12 @@ Re-running on the same song reuses the SECTIONS / GUIDE CUES tracks and replaces
 
 ## Known limitations
 - **Tempo automation is recorded, not drawn.** Live's API cannot write arrangement automation directly,
-  so the device records about one bar of tempo automation in real time. The new tempo holds until the
-  next tempo point already in the set.
+  so the device plays the song once with Automation Arm on (as long as the song lasts). Set `"tempoMode": "set"` to
+  skip this and just set the tempo.
 - **One steady tempo per song.** Fine for click-based backing tracks. Songs that drift get a warning.
-- **Section labels need a listen.** The AI model (All-In-One) is good but not perfect, and the built-in
-  fallback rules were tuned on a single song.
+- **Section labels need a listen.** Songs with vocals use the AI model (All-In-One). Instrumental backing tracks
+  use the repetition analysis, because the AI model labels almost everything "instrumental" when there's no singing.
+  The repetition rules were tuned on a single song.
 - **macOS only** for now (the installer and paths are Mac-specific).
 
 ## Credits

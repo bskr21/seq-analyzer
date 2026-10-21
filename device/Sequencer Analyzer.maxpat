@@ -320,7 +320,7 @@
      "id": "obj-js",
      "maxclass": "newobj",
      "numinlets": 1,
-     "numoutlets": 2,
+     "numoutlets": 3,
      "patching_rect": [
       300,
       280,
@@ -328,6 +328,7 @@
       22
      ],
      "outlettype": [
+      "",
       "",
       ""
      ],
@@ -392,6 +393,103 @@
    },
    {
     "box": {
+     "id": "obj-progbg",
+     "maxclass": "panel",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      480,
+      300,
+      200,
+      6
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      54,
+      378,
+      6
+     ],
+     "varname": "progbg",
+     "bgcolor": [
+      0.16,
+      0.16,
+      0.16,
+      1.0
+     ],
+     "bgfillcolor_type": "color",
+     "bgfillcolor_color": [
+      0.16,
+      0.16,
+      0.16,
+      1.0
+     ],
+     "border": 0,
+     "rounded": 3,
+     "mode": 0,
+     "ignoreclick": 1
+    }
+   },
+   {
+    "box": {
+     "id": "obj-progfill",
+     "maxclass": "panel",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      480,
+      310,
+      1,
+      6
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      54,
+      1,
+      6
+     ],
+     "varname": "progfill",
+     "bgcolor": [
+      1.0,
+      0.71,
+      0.2,
+      1.0
+     ],
+     "bgfillcolor_type": "color",
+     "bgfillcolor_color": [
+      1.0,
+      0.71,
+      0.2,
+      1.0
+     ],
+     "border": 0,
+     "rounded": 3,
+     "mode": 0,
+     "ignoreclick": 1
+    }
+   },
+   {
+    "box": {
+     "id": "obj-thispatcher",
+     "maxclass": "newobj",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "patching_rect": [
+      480,
+      320,
+      80,
+      22
+     ],
+     "outlettype": [
+      "",
+      ""
+     ],
+     "text": "thispatcher"
+    }
+   },
+   {
+    "box": {
      "id": "obj-status",
      "maxclass": "comment",
      "numinlets": 1,
@@ -406,9 +504,9 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      52,
+      64,
       378,
-      50
+      46
      ],
      "linecount": 3,
      "fontsize": 10.5
@@ -580,6 +678,18 @@
      ],
      "destination": [
       "obj-node",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-js",
+      2
+     ],
+     "destination": [
+      "obj-thispatcher",
       0
      ]
     }

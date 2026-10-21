@@ -108,14 +108,137 @@ def number_labels(secs):
     return merged
 
 
+# --------------------------------------------------------------------------- progress
+CACHE = os.path.join(os.path.expanduser("~"), "Library", "Caches", "AICueBuilder")
+TIMING = os.path.join(CACHE, "timing.json")
+# seconds of work per second of audio (first-run guesses; learned afterwards)
+DEFAULT_RATES = {"decode": 0.01, "beats": 0.12, "demix": 0.45, "model": 0.35, "features": 0.12}
+
+
+class Progress:
+    """Prints "PERCENT <0-100> <eta seconds>" lines; stages are weighted by estimated time."""
+
+    def __init__(self, duration, stages):
+        import threading, time
+        self.time, self.threading = time, threading
+        self.duration = duration
+        try:
+            self.rates = dict(DEFAULT_RATES, **json.load(open(TIMING)))
+        except Exception:
+            self.rates = dict(DEFAULT_RATES)
+        self.stages = stages
+        self.est = {k: max(1.0, self.rates[k] * duration) for k in stages}
+        self.done_est = 0.0
+        self.t0 = time.time()
+        self.cur, self.cur_t0, self.frac = None, None, 0.0
+        self.measured = {}
+        self._stop = threading.Event()
+        threading.Thread(target=self._tick, daemon=True).start()
+
+    def total(self):
+        return sum(self.est[k] for k in self.stages)
+
+    def start(self, stage, text):
+        if self.cur:
+            self.end()
+        self.cur, self.cur_t0, self.frac = stage, self.time.time(), 0.0
+        log(text)
+        self.emit()
+
+    def set_frac(self, f):           # real progress reported by the stage itself
+        self.frac = max(self.frac, min(1.0, f))
+        self.emit()
+
+    def end(self):
+        if not self.cur:
+            return
+        took = self.time.time() - self.cur_t0
+        self.measured[self.cur] = took / max(1.0, self.duration)
+        self.done_est += self.est[self.cur]
+        self.cur = None
+        self.emit()
+
+    def skip(self, stage):
+        if stage in self.stages:
+            self.stages = [k for k in self.stages if k != stage]
+
+    def emit(self):
+        tot = self.total()
+        cur_est = self.est.get(self.cur, 0.0)
+        frac = self.frac
+        if self.cur and frac == 0.0:         # no real progress: estimate from elapsed time
+            frac = min(0.95, (self.time.time() - self.cur_t0) / cur_est)
+        done = self.done_est + frac * cur_est
+        pct = 100.0 * done / tot if tot else 100.0
+        elapsed = self.time.time() - self.t0
+        eta = elapsed * (tot - done) / done if done > 0.02 * tot else tot - done
+        print("PERCENT %d %d" % (min(99, int(pct)), max(0, int(eta))), file=sys.stderr, flush=True)
+
+    def _tick(self):
+        while not self._stop.wait(1.0):
+            if self.cur:
+                self.emit()
+
+    def finish(self):
+        self.end()
+        self._stop.set()
+        try:                              # learn this machine's speed for next time
+            os.makedirs(CACHE, exist_ok=True)
+            old = dict(DEFAULT_RATES)
+            try:
+                old.update(json.load(open(TIMING)))
+            except Exception:
+                pass
+            for k, v in self.measured.items():
+                old[k] = 0.5 * old.get(k, v) + 0.5 * v if k in old else v
+            json.dump(old, open(TIMING, "w"))
+        except Exception:
+            pass
+        print("PERCENT 100 0", file=sys.stderr, flush=True)
+
+
+# --------------------------------------------------------------------------- stems (Demucs) with live progress
+def demix(path, prog):
+    """Separate stems with HTDemucs; returns the folder holding bass/drums/other/vocals.wav."""
+    import subprocess, re
+    out = os.path.join(CACHE, "demix")
+    stem_dir = os.path.join(out, "htdemucs", os.path.splitext(os.path.basename(path))[0])
+    import shutil
+    shutil.rmtree(stem_dir, ignore_errors=True)          # never reuse stems from another song
+    p = subprocess.Popen([sys.executable, "-m", "demucs.separate", "--out", out, "--name", "htdemucs",
+                          "--device", "cpu", path], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    buf, err = b"", b""
+    pat = re.compile(rb"(\d{1,3})%\|")
+    while True:
+        ch = p.stderr.read(64)
+        if not ch:
+            break
+        err = (err + ch)[-4000:]
+        buf = (buf + ch)[-200:]
+        m = pat.findall(buf)
+        if m:
+            prog.set_frac(int(m[-1]) / 100.0)
+    if p.wait() != 0:
+        raise RuntimeError("stem separation failed: " + err.decode(errors="ignore").strip().splitlines()[-1][:200])
+    return stem_dir
+
+
+def vocal_share(stem_dir):
+    """Fraction of the mix energy that is lead/backing vocals (0..1)."""
+    import soundfile as sf
+    e = {}
+    for s in ("bass", "drums", "other", "vocals"):
+        y, _ = sf.read(os.path.join(stem_dir, s + ".wav"), dtype="float32")
+        e[s] = float(np.mean(y.astype(np.float64) ** 2))
+    return e["vocals"] / max(1e-12, sum(e.values()))
+
+
 # --------------------------------------------------------------------------- engine 1: All-In-One
 def sections_allin1(path, grid, nbars):
-    import allin1
-    log("running All-In-One structure model (first run downloads models)")
-    work = os.path.join(os.path.expanduser("~"), "Library", "Caches", "AICueBuilder")
-    os.makedirs(work, exist_ok=True)
-    r = allin1.analyze(path, device="cpu", demix_dir=os.path.join(work, "demix"),
-                       spec_dir=os.path.join(work, "spec"), multiprocess=False)
+    import allin1, contextlib, io
+    with contextlib.redirect_stdout(io.StringIO()):     # keep its chatter out of our output
+        r = allin1.analyze(path, device="cpu", demix_dir=os.path.join(CACHE, "demix"),
+                           spec_dir=os.path.join(CACHE, "spec"), multiprocess=False)
     bar_len = grid["beat_period"] * grid["meter"]
     to_bar = lambda t: int(round((t - grid["first_downbeat"]) / bar_len)) + 1
     secs = []
@@ -268,45 +391,84 @@ def main():
     ap.add_argument("audio")
     ap.add_argument("--out")
     ap.add_argument("--engine", default="auto", choices=["auto", "allin1", "heuristic"])
+    ap.add_argument("--vocal-threshold", type=float, default=0.12,
+                    help="below this share of vocal energy the song is treated as instrumental")
     args = ap.parse_args()
     src = os.path.abspath(args.audio)
-    import soundfile as sf, tempfile
-    path, tmp = src, None
-    if os.path.splitext(src)[1].lower() not in (".wav", ".aif", ".aiff", ".flac"):
-        # decode compressed audio once (no ffmpeg needed on PATH)
-        log("decoding audio")
+    import soundfile as sf, shutil
+    os.makedirs(CACHE, exist_ok=True)
+    try:
+        duration = sf.info(src).duration
+    except Exception:
+        import librosa
+        duration = librosa.get_duration(path=src)
+    stages = ["decode", "beats"] + (["demix", "model"] if args.engine != "heuristic" else []) + ["features"]
+    prog = Progress(duration, stages)
+
+    # work on a WAV copy named after the song (no ffmpeg needed; stable stem-folder name)
+    prog.start("decode", "decoding audio")
+    base = os.path.splitext(os.path.basename(src))[0]
+    path = os.path.join(CACHE, base + ".wav")
+    if os.path.splitext(src)[1].lower() in (".wav", ".aif", ".aiff", ".flac"):
+        shutil.copyfile(src, path) if src.lower().endswith(".wav") else sf.write(path, sf.read(src)[0], sf.info(src).samplerate)
+    else:
         import librosa
         y, sr = librosa.load(src, sr=44100, mono=False)
-        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
-        sf.write(tmp, np.atleast_2d(y).T, sr)
-        path = tmp
+        sf.write(path, np.atleast_2d(y).T, sr)
     duration = sf.info(path).duration
 
-    log("detecting beats and tempo")
+    prog.start("beats", "detecting beats and tempo")
     bt, pos, beat_engine = track_beats(path)
     grid = fit_grid(bt, pos)
     bar_len = grid["beat_period"] * grid["meter"]
     nbars = int(np.floor((duration - grid["first_downbeat"]) / bar_len + 0.25))
     log("tempo %.2f BPM, %d/4, %d bars" % (grid["bpm"], grid["meter"], nbars))
 
-    secs, engine = None, None
+    secs, engine, vshare, note = None, None, None, ""
     if args.engine in ("auto", "allin1"):
         try:
-            secs, engine = sections_allin1(path, grid, nbars), "allin1"
+            prog.start("demix", "separating stems (vocals, drums, bass, other)")
+            stems = demix(path, prog)
+            vshare = vocal_share(stems)
+            if args.engine == "auto" and vshare < args.vocal_threshold:
+                note = "instrumental track (vocals %.0f%%): using repetition analysis" % (100 * vshare)
+                log(note)
+                prog.skip("model")
+            else:
+                prog.start("model", "running AI structure model (vocals %.0f%%)" % (100 * vshare))
+                secs = sections_allin1(path, grid, nbars)
+                kinds = {x["kind"] for x in secs}
+                if args.engine == "auto" and not ({"verse", "chorus"} & kinds):
+                    note = "AI model found no verse/chorus: using repetition analysis"
+                    log(note)
+                    secs = None
+                else:
+                    engine = "allin1"
         except Exception as e:
             if args.engine == "allin1":
                 raise
-            log("structure model unavailable (%s: %s); using built-in analysis" % (e.__class__.__name__, str(e)[:120]))
+            note = "AI model unavailable (%s): using repetition analysis" % e.__class__.__name__
+            log(note + " - " + str(e)[:160])
+            prog.skip("model")
     if secs is None:
+        prog.start("features", "finding repeated sections")
         secs, engine = sections_heuristic(path, grid, nbars), "heuristic"
+    else:
+        prog.skip("features")
+    prog.finish()
 
     secs = number_labels(secs)
     for s in secs:
         s["start"] = round(grid["first_downbeat"] + (s["start_bar"] - 1) * bar_len, 4)
         s["end"] = round(min(duration, grid["first_downbeat"] + (s["end_bar"] - 1) * bar_len), 4)
-    if tmp:
-        os.unlink(tmp)
+    import shutil
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+    shutil.rmtree(os.path.join(CACHE, "demix", "htdemucs", base), ignore_errors=True)
     result = dict(file=src, duration=round(duration, 3), beat_engine=beat_engine, engine=engine,
+                  vocal_share=None if vshare is None else round(vshare, 3), note=note,
                   bars=nbars, sections=secs, **grid)
     js = json.dumps(result, indent=1)
     if args.out:

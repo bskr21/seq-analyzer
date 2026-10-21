@@ -1,8 +1,8 @@
 // Sequencer Analyzer - Live API side (Max [js] object, classic ES5 JavaScript).
-// Outlet 0 -> node.script (analyze requests), outlet 1 -> status text.
+// Outlet 0 -> node.script (analyze requests), 1 -> status text, 2 -> thispatcher (progress bar).
 autowatch = 1;
 inlets = 1;
-outlets = 2;
+outlets = 3;
 
 var SECTIONS_NAME = "SECTIONS";
 var CUES_NAME = "GUIDE CUES";
@@ -14,7 +14,26 @@ var CUE_COLOR = 0xD08AE0;
 
 var state = null;   // per-run data
 
-function say(msg) { outlet(1, "set", msg); post("SeqAnalyzer: " + msg + "\n"); }
+var BAR = { x: 8, y: 54, w: 378, h: 6 };     // progress bar geometry (matches the patch)
+var lastText = "";
+
+function say(msg) { lastText = msg; outlet(1, "set", msg); post("SeqAnalyzer: " + msg + "\n"); }
+function bar(pct) {
+  var w = Math.max(1, Math.round(BAR.w * Math.max(0, Math.min(100, pct)) / 100));
+  outlet(2, "script", "sendbox", "progfill", "presentation_rect", BAR.x, BAR.y, w, BAR.h);
+}
+function fmtEta(sec) {
+  if (sec < 0) return "";
+  if (sec < 50) return " - about " + Math.max(5, Math.round(sec / 5) * 5) + " s left";
+  return " - about " + Math.round(sec / 60) + " min left";
+}
+// from node.script: progress <percent> <eta seconds>
+function progress(pct, eta) {
+  bar(pct);
+  var base = lastText.replace(/ \(\d+%.*$/, "");
+  lastText = base;
+  outlet(1, "set", base + " (" + Math.round(pct) + "%" + fmtEta(eta) + ")");
+}
 function fail(msg) { say("Error: " + msg); state = null; }
 
 // ------------------------------------------------------------------ LiveAPI helpers
@@ -53,6 +72,7 @@ function build() {
   }
   if (!best) { fail("drag the song into this track's Arrangement first"); return; }
   state = { busy: true, track: tr, clip: best, clipId: best.id, file: str(best, "file_path") };
+  bar(0);
   say("Analyzing... (first run can take a few minutes)");
   outlet(0, "analyze", state.file);
 }
@@ -60,6 +80,7 @@ function build() {
 function failed() { if (state) state.busy = false; }
 // messages coming back from node.script
 function status() { say(arrayfromargs(arguments).join(" ")); }
+function loadbang() { bar(0); }
 function options() {}
 
 function plan() {
@@ -72,7 +93,12 @@ function plan() {
 
 function recordtempo() {   // re-run only the tempo step for the last analyzed song
   if (!state || !state.plan || state.songStartBeat === undefined) { say("Run Analyze & Build first"); return; }
-  recordTempo(function () { say("Tempo automation written"); });
+  if (state.busy) { say("Already working..."); return; }
+  state.busy = true;
+  recordTempo(function () {
+    state.busy = false;
+    say(state.tempoNote ? "Note: " + state.tempoNote : "Tempo automation written: " + state.plan.bpm + " BPM");
+  });
 }
 
 // ------------------------------------------------------------------ 1. warp song clip to the detected grid
@@ -231,49 +257,75 @@ function makeCues() {
       } catch (e) {}
     }
     state.nCues = made.length;
-    if (p.recordTempo) recordTempo(finish); else finish();
+    var first = 1e12;
+    for (var q = 0; q < list.length; q++) first = Math.min(first, list[q].pos);
+    state.firstCueBeat = first < 1e12 ? first : state.songStartBeat;
+    if (p.recordTempo && p.tempoMode !== "off") recordTempo(finish); else finish();
   }, 400);
 }
 
-// ------------------------------------------------------------------ 5. tempo automation (short real-time recording)
+// ------------------------------------------------------------------ 5. tempo
+// Live's API cannot draw automation, so the tempo is recorded in real time: playback runs from just
+// before the first cue to the end of the song with Automation Arm on. When recording stops, Live
+// returns to whatever tempo was there before, so earlier/later songs in a medley keep theirs.
 function recordTempo(done) {
-  var song = api("live_set"), p = state.plan;
-  var X = state.songStartBeat;
+  var song = api("live_set"), p = state.plan, m = p.meter;
+  var P = Math.floor(Math.min(state.firstCueBeat, state.songStartBeat) / m) * m;   // step position
+  var E = state.songEndBeat;
+  if (p.tempoMode === "set") {             // no automation: just set the tempo
+    song.set("tempo", p.bpm);
+    say("Tempo set to " + p.bpm + " BPM (no automation)");
+    if (done) done();
+    return;
+  }
   var saved = {
     rec: num(song, "record_mode"), autoArm: num(song, "session_automation_record"),
-    loop: num(song, "loop"), pos: num(song, "current_song_time"), arms: []
+    loop: num(song, "loop"), arms: []
   };
   idList(song, "tracks").forEach(function (id) {
     var tr = byId(id);
     if (num(tr, "can_be_armed") == 1 && num(tr, "arm") == 1) { saved.arms.push(id); tr.set("arm", 0); }
   });
-  say("Recording tempo step (" + p.bpm + " BPM) at the song start...");
+  var secs = Math.round((E - P) * 60 / p.bpm);
+  say("Writing tempo " + p.bpm + " BPM from bar " + (P / m + 1) + ": plays the song once (" +
+      Math.floor(secs / 60) + ":" + ("0" + secs % 60).slice(-2) + ")");
   song.set("loop", 0);
-  song.set("current_song_time", X);
+  song.set("record_mode", 0);
   song.set("session_automation_record", 1);
-  song.set("record_mode", 1);
-  song.call("start_playing");
-  var tries = 0, wrote = false;
+  song.call("start_playing");               // starts at the insert marker...
+  var phase = "seek", ticks = 0, stoppedByUser = false;
   var poll = new Task(function () {
-    tries++;
+    ticks++;
     var playing = num(song, "is_playing") == 1, pos = num(song, "current_song_time");
-    if (!wrote && playing && pos >= X - 0.01) {
-      song.set("tempo", p.bpm);
-      wrote = true;
-      later(stopRec, Math.round(p.meter * 60000 / p.bpm) + 250);   // hold for one bar
-      poll.cancel();
-    } else if (tries > 500) { poll.cancel(); stopRec(); }
+    if (phase == "seek") {
+      if (playing) { song.set("current_song_time", Math.max(0, P - m)); phase = "approach"; }   // ...so jump one bar before P
+      else if (ticks > 500) { finishRec(false); }
+    } else if (phase == "approach") {
+      if (!playing) { stoppedByUser = true; finishRec(false); }
+      else if (pos >= P - 0.03 && pos < P + m) {            // punch in right at the step
+        song.set("record_mode", 1);
+        song.set("tempo", p.bpm);
+        phase = "rec";
+      } else if (pos >= P + m) { song.set("current_song_time", Math.max(0, P - m)); }
+    } else if (phase == "rec") {
+      if (!playing) { stoppedByUser = true; finishRec(true); }
+      else if (pos >= E - 0.03) { song.set("record_mode", 0); finishRec(true); }   // punch out at the song end
+      else if (ticks % 10 == 0) progress(100 * (pos - P) / Math.max(1, E - P), (E - pos) * 60 / p.bpm);
+    }
   }, this);
   poll.interval = 20;
   poll.repeat(-1);
-  function stopRec() {
+  function finishRec(wrote) {
+    poll.cancel();
     song.call("stop_playing");
     song.set("record_mode", saved.rec);
     song.set("session_automation_record", saved.autoArm);
     song.set("loop", saved.loop);
     saved.arms.forEach(function (id) { byId(id).set("arm", 1); });
-    song.set("current_song_time", X);
-    if (!wrote) say("Tempo not recorded (transport did not start) - set it by hand to " + p.bpm);
+    song.set("current_song_time", P);
+    bar(wrote && !stoppedByUser ? 100 : 0);
+    state.tempoNote = !wrote ? "tempo not written - use Re-record Tempo" :
+      stoppedByUser ? "tempo written only up to where you pressed Stop" : "";
     if (done) done();
   }
 }
@@ -282,9 +334,11 @@ function recordTempo(done) {
 function finish() {
   var p = state.plan;
   var msg = "Done: " + p.bpm + " BPM, " + state.nSections + " sections, " + state.nCues + " cues";
-  if (p.engine !== "allin1") msg += " (built-in analysis)";
+  if (p.note) msg += ". " + p.note.charAt(0).toUpperCase() + p.note.slice(1);
+  if (state.tempoNote) msg += ". Note: " + state.tempoNote;
   if (!p.tempo_stable) msg += ". Tempo drifts " + p.tempo_range[0] + "-" + p.tempo_range[1] + " BPM: check the grid";
   if (p.missingCues.length) msg += ". No cue file for: " + p.missingCues.join(", ");
   say(msg);
+  bar(100);
   state.busy = false;
 }

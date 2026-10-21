@@ -57,7 +57,7 @@ wire("obj-tempobtn", 0, "obj-tempomsg", 0)
 
 # engines
 box("obj-node", "newobj", [120, 220, 260, 22], "node.script aicb_node.js @autostart 1 @watch 0", ins=1, outs=2)
-box("obj-js", "newobj", [300, 280, 120, 22], "js aicb_live.js", ins=1, outs=2)
+box("obj-js", "newobj", [300, 280, 120, 22], "js aicb_live.js", ins=1, outs=3)
 wire("obj-prep", 0, "obj-node", 0)
 wire("obj-buildmsg", 0, "obj-js", 0)
 wire("obj-tempomsg", 0, "obj-js", 0)
@@ -70,9 +70,17 @@ box("obj-delay", "newobj", [600, 180, 70, 22], "delay 2000", ins=2, outs=1)
 box("obj-hello", "message", [600, 210, 50, 22], "hello", ins=2, outs=1)
 wire("obj-thisdev", 0, "obj-delay", 0); wire("obj-delay", 0, "obj-hello", 0); wire("obj-hello", 0, "obj-node", 0)
 
+# progress bar: a track panel and a fill panel resized by aicb_live.js via thispatcher
+box("obj-progbg", "panel", [480, 300, 200, 6], ins=1, outs=0, pres=[8, 54, 378, 6],
+    varname="progbg", bgcolor=[0.16, 0.16, 0.16, 1.0], bgfillcolor_type="color", bgfillcolor_color=[0.16, 0.16, 0.16, 1.0], border=0, rounded=3, mode=0, ignoreclick=1)
+box("obj-progfill", "panel", [480, 310, 1, 6], ins=1, outs=0, pres=[8, 54, 1, 6],
+    varname="progfill", bgcolor=[1.0, 0.71, 0.2, 1.0], bgfillcolor_type="color", bgfillcolor_color=[1.0, 0.71, 0.2, 1.0], border=0, rounded=3, mode=0, ignoreclick=1)
+box("obj-thispatcher", "newobj", [480, 320, 80, 22], "thispatcher", ins=1, outs=2)
+wire("obj-js", 2, "obj-thispatcher", 0)
+
 # status line
 box("obj-status", "comment", [300, 340, 380, 40], "Ready.", ins=1, outs=0,
-    pres=[8, 52, 378, 50], linecount=3, fontsize=10.5)
+    pres=[8, 64, 378, 46], linecount=3, fontsize=10.5)
 wire("obj-js", 1, "obj-status", 0)
 
 patcher = {"patcher": {

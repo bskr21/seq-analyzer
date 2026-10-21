@@ -18,7 +18,16 @@ Bar *n* starts at `first_downbeat + (n−1) · meter · beat_period`.
 
 ## 2. Sections
 
-### Engine A: All-In-One (default)
+### Choosing the engine (`--engine auto`)
+1. Separate the stems with HTDemucs (the slowest stage, which reports real progress).
+2. Measure the **vocal share**: the vocal stem's energy as a fraction of all stems.
+3. If it's below `--vocal-threshold` (default 0.12), the song is an **instrumental backing track**, so use Engine B.
+   The AI model is trained on full songs and labels nearly everything `inst` when there's no singing.
+4. Otherwise run Engine A. If its result has neither a verse nor a chorus, fall back to Engine B.
+
+The `note` field in the output says which path was taken.
+
+### Engine A: All-In-One
 The [All-In-One Music Structure Analyzer](https://github.com/mir-aidj/all-in-one) separates the song with Demucs and
 predicts labeled segments (`intro, verse, chorus, bridge, inst, outro, break`). Segment edges are snapped
 to the bar grid above. The 8-model `harmonix-all` ensemble runs on CPU.
@@ -47,13 +56,24 @@ These rules were tuned on one song (*Gelap Jadi Terang*), where they reproduce t
 Consecutive segments of the same kind are merged. Verses, bridges and pre-choruses get numbers
 when they occur more than once (`VERSE 1`, `VERSE 2`); choruses stay `CHORUS`.
 
+## Progress protocol
+stderr lines:
+- `PROGRESS <text>`: the current stage
+- `PERCENT <0-100> <eta seconds>`: overall progress
+
+Each stage (decode, beats, demix, model, features) is weighted by its expected time:
+`rate × song length`. The stem stage reports its own percentage, and the other stages are estimated from
+elapsed time. Measured rates are saved to `~/Library/Caches/AICueBuilder/timing.json`, so estimates improve
+after the first run.
+
 ## Output
 ```json
 {
   "file": "/path/song.mp3", "duration": 208.19,
   "bpm": 150.0, "beat_period": 0.4, "meter": 4, "first_downbeat": 0.043,
   "tempo_stable": true, "tempo_range": [149.1, 150.5],
-  "beat_engine": "madmom", "engine": "allin1", "bars": 130,
+  "beat_engine": "madmom", "engine": "heuristic", "bars": 130,
+  "vocal_share": 0.03, "note": "instrumental track (vocals 3%): using repetition analysis",
   "sections": [
     {"kind": "intro", "label": "INTRO", "start_bar": 5, "end_bar": 13, "start": 6.44, "end": 19.24},
     {"kind": "verse", "label": "VERSE 1", "start_bar": 13, "end_bar": 33, "start": 19.24, "end": 51.24}

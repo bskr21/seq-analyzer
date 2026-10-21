@@ -8,7 +8,10 @@
 | `Choose your cue folder first` | No `cueDir` set | Click **Choose Cue Folder** |
 | `… (built-in analysis)` at the end | All-In-One failed (often the first run is offline) | Connect to the internet and run again; check the Max window for the error |
 | `No cue file for: …` | No file matching that label | Add a file named `… - <Label>.wav`, see [cue-packs.md](cue-packs.md) |
-| `Tempo not recorded (transport did not start)` | Playback didn't start within 10 s | Turn off Count-In and click **Re-record Tempo**, or draw the step by hand |
+| `tempo not written - use Re-record Tempo` | Playback didn't start within 10 s | Click **Re-record Tempo** |
+| `tempo written only up to where you pressed Stop` | Stop was pressed during the tempo pass | Click **Re-record Tempo** and let it play to the end |
+| Sections are all INTRO / INSTRUMENTAL (v0.1.x) | AI model on an instrumental track | Update to v0.2.0 (vocal check), or set `"structure": "heuristic"` |
+| Analysis takes long | Stem separation on CPU | The progress bar shows the time left. For backing tracks, `"structure": "heuristic"` skips stems |
 | `Tempo drifts …` | Song isn't steady | Check the grid by ear; manual warp markers may be needed |
 | Device won't load / shows an empty box | `.amxd` not accepted | Drop an empty Max Audio Effect, open it in Max, open `Sequencer Analyzer.maxpat`, copy everything into it, then save it next to the two `.js` files |
 | Buttons do nothing (v0.1.0) | Button clicks were filtered out | Update to v0.1.1 and re-run `setup.command` |

@@ -35,10 +35,19 @@ For a section starting at arrangement beat `S`:
 - a name cue is skipped if it would start before the previous section starts (very short sections)
 
 ## Tempo recording
-The LOM has no function to write arrangement automation. The device records a short take instead:
-1. Save the record and Automation Arm states, the loop setting, the playhead, and which tracks are armed. Disarm all tracks, so no audio or MIDI is recorded.
-2. Move the playhead to the song's first bar line, then turn on Automation Arm and Arrangement Record, and start playback.
-3. Poll every 20 ms. Once playback has passed the start point (after any count-in), set `song.tempo = bpm`.
-4. After one bar plus 250 ms, stop and restore everything that was saved.
+The LOM has no function to write arrangement automation, so the device records it in real time.
+Step position `P` is the bar line of the first cue or the song start, whichever is earlier. The end `E` is the end of the song clip.
+1. Save the record and Automation Arm states, the loop setting, and which tracks are armed. Disarm all tracks, so no audio or MIDI is recorded.
+2. Turn on Automation Arm with Arrangement Record off, then start playback. `start_playing` starts at the
+   insert marker, so the device then jumps the playhead to one bar before `P`.
+3. Poll every 20 ms. When the playhead reaches `P`, punch in (`record_mode = 1`) and set `song.tempo = bpm`.
+4. At `E`, punch out and stop, then restore everything. The progress bar follows the playhead in the meantime.
 
-Result: a tempo step at the song start, holding until the next tempo point already in the set.
+Live writes the new value only between punch-in and punch-out, then returns to the previous tempo or envelope.
+So in a medley, the songs before and after keep their tempo. Pressing Stop cancels the recording; the tempo is then written only up to that point.
+
+`"tempoMode": "set"` skips the recording and just sets `song.tempo` (no automation). `recordTempo: false` leaves tempo alone.
+
+## Progress bar
+`aicb_live.js` resizes a panel (`progfill`) through `thispatcher` (`script sendbox progfill presentation_rect …`)
+from the `PERCENT` lines relayed by Node, and from the playhead position during tempo recording.

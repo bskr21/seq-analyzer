@@ -47,7 +47,8 @@ class LiveAPI {
     }
   }
   set(prop, v) {
-    if (prop === "tempo") { this.o.tempo = v; if (song.record_mode && song.is_playing && song.session_automation_record) song.tempoLog.push([song.current_song_time, v]); return; }
+    if (prop === "tempo") { this.o.tempo = v; if (song.record_mode && song.is_playing && song.session_automation_record) song.tempoLog.push(["value", song.current_song_time, v]); return; }
+    if (prop === "record_mode" && this.o === song && song.is_playing) song.tempoLog.push([v ? "punch-in" : "punch-out", song.current_song_time]);
     if (prop === "is_playing") { song.is_playing = v; return; }
     this.o[prop] = v;
   }
@@ -72,7 +73,7 @@ class LiveAPI {
       }
       case "remove_warp_marker": o.markers = o.markers.filter(m => Math.abs(m.beat_time - a[0]) > 1e-9); return;
       case "move_warp_marker": { const m = o.markers.find(m => Math.abs(m.beat_time - a[0]) < 1e-9); if (!m) throw new Error("no marker at " + a[0]); m.beat_time += a[1]; return; }
-      case "start_playing": song.is_playing = 1; song.current_song_time += 0.0; return;
+      case "start_playing": song.is_playing = 1; song.current_song_time = 30; return;   // insert marker somewhere else
       case "stop_playing": song.is_playing = 0; return;
       default: throw new Error("call " + fn);
     }
@@ -80,12 +81,12 @@ class LiveAPI {
 }
 class Task { constructor(fn, ctx) { this.fn = fn; this.interval = 0; this.h = null; }
   schedule(ms) { this.h = setTimeout(() => this.fn(), ms || 0); }
-  repeat() { this.h = setInterval(() => { song.current_song_time += 0.05; this.fn(); }, this.interval || 1); }
+  repeat() { this.h = setInterval(() => { if (song.is_playing) song.current_song_time += 0.25; this.fn(); }, 1); }
   cancel() { clearTimeout(this.h); clearInterval(this.h); } }
 
 const status = [];
 const ctx = { LiveAPI, Task, post: s => process.stdout.write("  post: " + s),
-  outlet: (n, ...a) => { if (n === 1) status.push(a.slice(1).join(" ")); else if (a[0] === "analyze") onAnalyze(a.slice(1).join(" ")); },
+  outlet: (n, ...a) => { if (n === 2) return; if (n === 1) status.push(a.slice(1).join(" ")); else if (a[0] === "analyze") onAnalyze(a.slice(1).join(" ")); },
   arrayfromargs: args => Array.prototype.slice.call(args), console };
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(ROOT, "device", "aicb_live.js"), "utf8"), ctx);
@@ -114,5 +115,5 @@ setTimeout(() => {
     console.log("\nRE-RUN tracks:", song.tracks.map(t => t.name).join(" | "), "| sections:", song.tracks.find(t => t.name === "SECTIONS").clips.length, "cues:", song.tracks.find(t => t.name === "GUIDE CUES").clips.length);
     console.log(status[status.length - 1]);
     process.exit(0);
-  }, 4000);
-}, 4000);
+  }, 9000);
+}, 9000);
