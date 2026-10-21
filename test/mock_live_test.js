@@ -14,10 +14,18 @@ const songTrack = mkTrack("SEQ", true);
 song.tracks.push(mkTrack("1-Click", false), songTrack);
 song.tracks[0].arm = 1;
 const SR = 44100, DUR = 208.192;
-const songClip = reg({ kind: "clip", audio: 1, file_path: "/Users/x/Gelap Jadi Terang F#150.wav", start_time: 64, start_marker: 0, warping: 0,
-  sample_rate: SR, sample_length: Math.round(DUR * SR), markers: [{ sample_time: 0, beat_time: 0 }, { sample_time: 10, beat_time: 24.5 }] });
-songClip.end_time_fn = c => c.start_time + (beatAtM(c.markers, DUR) - c.start_marker);
-songTrack.clips.push(songClip);
+// two songs on one track, both auto-warped by Live on import (the device must switch warping off)
+function mkSong(file, start, dur) {
+  const c = reg({ kind: "clip", audio: 1, file_path: file, start_time: start, start_marker: 0, warping: 1,
+    sample_rate: SR, sample_length: Math.round(dur * SR), loop_start: 0, loop_end: dur, dur });
+  c.end_time_fn = x => x.start_time + x.dur * song.tempo / 60;
+  songTrack.clips.push(c);
+  return c;
+}
+const songClip = mkSong("/Users/x/Gelap Jadi Terang F#150.wav", 64, DUR);
+const song2 = mkSong("/Users/x/Kumilikmu.wav", 600, 120);
+songTrack.clips.push(reg({ kind: "clip", audio: 1, file_path: "/Users/x/sfx.wav", start_time: 590, sample_rate: SR,
+  sample_length: 5 * SR, warping: 0, end_time: 592 }));   // a short clip: not a song
 function beatAtM(M, t) { M = M.slice().sort((a, b) => a.beat_time - b.beat_time); let i = 0; while (i < M.length - 2 && t > M[i + 1].sample_time) i++;
   const a = M[i], b = M[i + 1]; return a.beat_time + (t - a.sample_time) * (b.beat_time - a.beat_time) / (b.sample_time - a.sample_time); }
 
@@ -100,7 +108,13 @@ vm.runInContext(fs.readFileSync(path.join(ROOT, "device", "aicb_live.js"), "utf8
 const result = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const cueDir = process.argv[3];
 function onAnalyze(file) {
-  const plan = node.makePlan(result, { cueDir, leadBars: 2, counts: true, recordTempo: true, tempoMode: process.env.TEMPO_MODE || "follow" });
+  let res = result;
+  if (/Kumilikmu/.test(file)) {                     // second song: 74 BPM, 3/4-free simple form
+    res = Object.assign({}, result, { bpm: 74, beat_period: 60 / 74, first_downbeat: 0.0, duration: 120, bars: 37,
+      sections: [{ label: "INTRO", start_bar: 1, end_bar: 5 }, { label: "VERSE 1", start_bar: 5, end_bar: 21 },
+                 { label: "CHORUS", start_bar: 21, end_bar: 38 }] });
+  }
+  const plan = node.makePlan(res, { cueDir, leadBars: 2, counts: true, recordTempo: true, tempoMode: process.env.TEMPO_MODE || "follow" });
   setTimeout(() => ctx.plan(JSON.stringify(plan)), 5);
 }
 ctx.build();
@@ -111,9 +125,7 @@ setTimeout(() => {
   console.log("\nSECTIONS:"); sec.clips.forEach(c => console.log("  %s %d-%d", c.name.padEnd(13), c.start_time, c.end_time));
   console.log("\nCUES (first 12):"); cue.clips.slice(0, 12).forEach(c => console.log("  %s @%d warp=%d len=%ss %s", c.name.padEnd(13), c.start_time, c.warping, c.loop_end.toFixed(3), path.basename(c.file)));
   console.log("  ... total", cue.clips.length);
-  console.log("\nSONG CLIP markers:", JSON.stringify(songClip.markers), "warping", songClip.warping,
-    "\n  check: file time of bar 5 (beat 80) =", ((80 - 64 + songClip.start_marker - songClip.markers[0].beat_time) / (150 / 60) + songClip.markers[0].sample_time).toFixed(4), "s");
-  console.log("TEMPO writes during record:", JSON.stringify(song.tempoLog), " record_mode restored:", song.record_mode, " click arm restored:", song.tracks.find(t => t.name === "1-Click").arm);
+  console.log("\nSONG CLIPS warping:", songClip.warping, song2.warping, "(0 = original speed)");
   // re-run to check track reuse
   ctx.build();
   setTimeout(() => {
@@ -128,7 +140,7 @@ async function sweep() {
   ctx.init();
   song.is_playing = 1;
   const changes = [];
-  for (let pos = 0; pos <= 700; pos += 0.125) {          // ~one notification per 50 ms at 150 BPM
+  for (let pos = 0; pos <= 800; pos += 0.125) {          // ~one notification per 50 ms at 150 BPM
     const before = song.tempo;
     song.current_song_time = pos;
     observers.filter(o => o.name === "current_song_time").forEach(o => o.api.cb(["current_song_time", pos]));
@@ -139,7 +151,7 @@ async function sweep() {
                        await new Promise(r => setTimeout(r, 0)); changes.push(["jump back to 100 ->", song.tempo]); }
   }
   console.log("\nFOLLOW: tempo changes during playback [beat, from, to]:", JSON.stringify(changes));
-  ctx.followon(0); song.tempo = 99; ctx.checkPos(200);
+  ctx.followon(0); song.tempo = 99; ctx.checkPos(200); ctx.checkPos(700);
   await new Promise(r => setTimeout(r, 5));
   console.log("FOLLOW off -> tempo untouched:", song.tempo === 99);
 }

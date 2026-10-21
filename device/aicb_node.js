@@ -178,12 +178,30 @@ function analyze(file) {
   });
 }
 
+// analysis results are cached per file (path, size, date) and per analysis settings
+const ENGINE_VERSION = "0.5";
+function cacheFile(file) {
+  const cfg = loadConfig(), st = fs.statSync(file);
+  const key = [ENGINE_VERSION, file, st.size, st.mtimeMs, cfg.structure, cfg.vocalThreshold].join("|");
+  return path.join(os.homedir(), "Library", "Caches", "AICueBuilder", "results",
+    require("crypto").createHash("sha1").update(key).digest("hex") + ".json");
+}
+
 async function run(file) {
   if (busy) return status("Already working...");
   busy = true;
   try {
-    status("Analyzing " + path.basename(file) + " ...");
-    const res = await analyze(file);
+    status("analyzing " + path.basename(file) + " ...");
+    const cached = cacheFile(file);
+    let res;
+    if (fs.existsSync(cached)) {
+      res = JSON.parse(fs.readFileSync(cached, "utf8"));
+      if (maxAPI) maxAPI.outlet("progress", 100, 0);
+    } else {
+      res = await analyze(file);
+      fs.mkdirSync(path.dirname(cached), { recursive: true });
+      fs.writeFileSync(cached, JSON.stringify(res));
+    }
     const plan = makePlan(res, loadConfig());
     if (maxAPI) await maxAPI.outlet("plan", JSON.stringify(plan));
     else console.log(JSON.stringify(plan, null, 1));

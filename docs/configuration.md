@@ -35,6 +35,7 @@ Changes take effect on the next run, so there's no need to reload the device.
 |---|---|
 | `~/Library/Application Support/AICueBuilder/venv` | Private Python 3.11 + libraries |
 | `~/Library/Application Support/AICueBuilder/engine` | Analysis engine |
+| `~/Library/Caches/AICueBuilder/results` | Cached analyses (one per song file and settings). Delete to force a fresh analysis |
 | `~/Library/Caches/AICueBuilder` | Separated stems and spectrograms (safe to delete) |
 | `~/.cache/huggingface`, `~/.cache/torch` | Downloaded AI models |
 | `User Library/Presets/Audio Effects/Max Audio Effect/Sequencer Analyzer` | The device (Browser → Max for Live) |

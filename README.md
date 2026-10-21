@@ -3,7 +3,7 @@
 A Max for Live device that prepares a worship/playback **sequence** in one click. You drop a song
 into Live's Arrangement and press **Analyze & Build**. The device then:
 
-1. **Detects the BPM** and bar grid of the song, and locks the clip to that grid with warp markers.
+1. **Detects the BPM** and bar grid of every song on the track. Songs play **unwarped**, at their original speed.
 2. **Follows the song's tempo:** whenever the playhead enters the song (from its first cue to the end of its last
    section), Live's tempo switches to the song's BPM. No automation, no saving, no extra playback.
 3. **Finds the song structure** (Intro, Verse, Chorus, Bridge, Instrumental, Breakdown, Outro…).
@@ -11,7 +11,7 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
 5. Creates a **GUIDE CUES** audio track with spoken cues from your own cue pack: the section name
    two bars ahead, then "1 2 3 4" in the bar before the section.
 
-> Status: **v0.4.0, prototype.** Tested against a simulated Live API and real song analysis,
+> Status: **v0.5.0, prototype.** Tested against a simulated Live API and real song analysis,
 > but not yet run inside Live itself. See [Known limitations](#known-limitations).
 
 ## Requirements
@@ -31,15 +31,18 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
    - runs a self-test (a synthetic 120 BPM click should read as 120 BPM)
 
 ## Use
-1. Drag the song onto an **audio track** in Arrangement View, starting on a bar line.
+1. Drag your song(s) onto an **audio track** in Arrangement View, each starting on a bar line. Several songs can
+   sit one after another on the same track (audio clips shorter than 30 s, like sound effects, are skipped).
 2. Drop **Sequencer Analyzer** (Browser → Max for Live) on that same track.
 3. First time: **Choose Cue Folder** → select your cue pack folder.
 4. Click **Analyze & Build**. A progress bar shows how far along the analysis is and the time left.
-   Repeat for as many songs as you like (one device per song track).
-5. Keep the device on the track: with **Tempo Follow: On** it switches the tempo whenever playback enters its song,
-   including when you jump into the middle. Changes you make to the tempo mid-song are left alone.
+   All songs on the track are processed in order into the same SECTIONS / GUIDE CUES tracks.
+5. Keep the device on the track: with **Tempo Follow: On** it switches the tempo whenever playback enters a song
+   (up to 16 per track), including when you jump into the middle. Changes you make to the tempo mid-song are left alone.
 
-Re-running on the same song reuses the SECTIONS / GUIDE CUES tracks and replaces only that song's clips.
+Re-building is quick: each song's analysis is cached, so only new or changed files are analyzed again.
+
+Re-running reuses the SECTIONS / GUIDE CUES tracks and replaces only the analyzed songs' clips.
 
 ## Documentation
 | Doc | What's in it |

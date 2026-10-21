@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.0 (2026-10-21)
+- **Songs stay unwarped.** The device no longer touches warp markers (Live asked "keep the current timing?" and the
+  audio ended up faster). If Live auto-warped a clip, the device turns warping off. Tempo Follow plays each song at
+  its own BPM, and section positions are computed from the original audio.
+- **Several songs per track:** every audio clip of 30 s or more on the track is analyzed and built in order, into the
+  same SECTIONS / GUIDE CUES tracks. Tempo Follow remembers up to 16 songs per track, each with its own BPM.
+- **Analysis cache:** rebuilding a song that's already analyzed is instant.
+- The progress bar covers all songs, and the status line shows "Song 1/2: …".
+
 ## v0.4.0 (2026-10-21)
 - **Tempo Follow** replaces Write Tempo. After a build, the device stores its song's range and BPM (saved with
   the set). Whenever playback enters that song, from the first cue to the end of the last section, it switches

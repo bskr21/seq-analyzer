@@ -53,20 +53,26 @@ box("obj-tempobtn", "live.text", [460, 60, 120, 18], ins=1, outs=2, outtype=["",
         "parameter_mmax": 1, "parameter_enum": ["off", "on"], "parameter_initial_enable": 1,
         "parameter_initial": [1], "parameter_invisible": 1}})
 
-# this song's tempo range, stored with the set (hidden)
-def stored(id_, name, y, lo, hi):
-    box(id_, "live.numbox", [620, y, 60, 15], ins=1, outs=2, outtype=["", "float"], varname=name,
-        parameter_enable=1, saved_attribute_attributes={"valueof": {
-            "parameter_longname": name, "parameter_shortname": name, "parameter_type": 0,
-            "parameter_mmin": lo, "parameter_mmax": hi, "parameter_initial_enable": 1,
-            "parameter_initial": [0], "parameter_invisible": 1, "parameter_unitstyle": 0}})
-stored("obj-fstart", "FollowStart", 250, 0.0, 1000000.0)
-stored("obj-fend", "FollowEnd", 280, 0.0, 1000000.0)
-stored("obj-fbpm", "FollowBpm", 310, 0.0, 999.0)
-box("obj-route", "newobj", [620, 220, 110, 22], "route start end bpm", ins=1, outs=4)
-box("obj-pstart", "newobj", [700, 250, 80, 22], "prepend fstart", ins=1, outs=1)
-box("obj-pend", "newobj", [700, 280, 80, 22], "prepend fend", ins=1, outs=1)
-box("obj-pbpm", "newobj", [700, 310, 80, 22], "prepend fbpm", ins=1, outs=1)
+# tempo range of each song on the track (16 slots x start/end/bpm), stored with the set (hidden)
+SLOTS = 16
+box("obj-routeslot", "newobj", [620, 200, 60, 22], "route slot", ins=2, outs=2)
+box("obj-routeidx", "newobj", [620, 230, 300, 22], "route " + " ".join(str(i) for i in range(SLOTS)), ins=2, outs=SLOTS + 1)
+for i in range(SLOTS):
+    x = 620 + i * 120
+    box("obj-unpack%d" % i, "newobj", [x, 270, 80, 22], "unpack 0. 0. 0.", ins=1, outs=3)
+    wire("obj-routeidx", i, "obj-unpack%d" % i, 0)
+    for j, key in enumerate(("start", "end", "bpm")):
+        name = "Follow%s%d" % (key.capitalize(), i)
+        hi = 999.0 if key == "bpm" else 1000000.0
+        box("obj-n%d%s" % (i, key), "live.numbox", [x, 300 + j * 30, 60, 15], ins=1, outs=2, outtype=["", "float"],
+            varname=name, parameter_enable=1, saved_attribute_attributes={"valueof": {
+                "parameter_longname": name, "parameter_shortname": name, "parameter_type": 0,
+                "parameter_mmin": 0.0, "parameter_mmax": hi, "parameter_initial_enable": 1,
+                "parameter_initial": [0], "parameter_invisible": 1, "parameter_unitstyle": 0}})
+        box("obj-p%d%s" % (i, key), "newobj", [x, 400 + j * 30, 110, 22], "prepend fslot %d %s" % (i, key), ins=1, outs=1)
+        wire("obj-unpack%d" % i, j, "obj-n%d%s" % (i, key), 0)
+        wire("obj-n%d%s" % (i, key), 0, "obj-p%d%s" % (i, key), 0)
+        wire("obj-p%d%s" % (i, key), 0, "obj-js", 0)
 box("obj-pfollow", "newobj", [460, 90, 90, 22], "prepend followon", ins=1, outs=1)
 box("obj-init", "message", [700, 150, 40, 22], "init", ins=2, outs=1)
 # live.text in button mode sends a bang from its left outlet on click
@@ -94,11 +100,9 @@ box("obj-hello", "message", [600, 210, 50, 22], "hello", ins=2, outs=1)
 wire("obj-thisdev", 0, "obj-delay", 0); wire("obj-delay", 0, "obj-hello", 0); wire("obj-hello", 0, "obj-node", 0)
 # the Live API is ready once live.thisdevice bangs: start following
 wire("obj-thisdev", 0, "obj-init", 0); wire("obj-init", 0, "obj-js", 0)
-# stored range: js writes it, and the restored values flow back to js when the set loads
-wire("obj-js", 3, "obj-route", 0)
-wire("obj-route", 0, "obj-fstart", 0); wire("obj-route", 1, "obj-fend", 0); wire("obj-route", 2, "obj-fbpm", 0)
-wire("obj-fstart", 0, "obj-pstart", 0); wire("obj-fend", 0, "obj-pend", 0); wire("obj-fbpm", 0, "obj-pbpm", 0)
-wire("obj-pstart", 0, "obj-js", 0); wire("obj-pend", 0, "obj-js", 0); wire("obj-pbpm", 0, "obj-js", 0)
+# stored ranges: js writes "slot i start end bpm"; restored values flow back to js when the set loads
+wire("obj-js", 3, "obj-routeslot", 0)
+wire("obj-routeslot", 0, "obj-routeidx", 0)
 
 # progress bar: custom-drawn [jsui]
 box("obj-progress", "jsui", [480, 300, 200, 8], ins=1, outs=1, pres=[8, 54, 378, 8],
