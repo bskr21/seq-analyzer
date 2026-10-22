@@ -128,25 +128,104 @@ function recordtempo() {   // real-time recording for the last analyzed song (te
   });
 }
 
-// ------------------------------------------------------------------ 1. place the song on the grid (unwarped)
-// The song plays at its original speed (warp off); Tempo Follow sets Live's tempo to its BPM while it plays,
-// so beat positions are: start_time + (file seconds - clip start offset) * bpm / 60.
-function alignSong() {
-  var c = byId(state.cur.clipId);
-  if (num(c, "warping") == 1) { c.set("warping", 0); later(alignSong2, 500); }   // undo Live's auto-warp
-  else alignSong2();
+// ------------------------------------------------------------------ 1. lock the song at its own BPM (warped)
+// Each song is warped at exactly its BPM, so its position and length in beats never change with the set tempo
+// (unwarped clips grow and shrink with the tempo and run into the next song). Method: set Live's tempo to the
+// song's BPM, then switch Warp on with "keep the current timing": the song plays at its original speed at its
+// own BPM. Live may show a dialog for this; the device waits for it. The result is checked from the warp markers.
+function markers(c) {
+  var o = JSON.parse(str(c, "warp_markers"));
+  var arr = o.warp_markers || o;
+  arr.sort(function (a, b) { return a.beat_time - b.beat_time; });
+  return arr;
 }
+function beatAt(M, t) {
+  var i = 0;
+  while (i < M.length - 2 && t > M[i + 1].sample_time) i++;
+  var a = M[i], b = M[i + 1];
+  return a.beat_time + (t - a.sample_time) * (b.beat_time - a.beat_time) / (b.sample_time - a.sample_time);
+}
+// BPM of the clip's warp map, and whether it is one straight line (no tempo changes inside)
+function warpBpm(c) {
+  var M = markers(c);
+  if (M.length < 2) return { bpm: 0, straight: false };
+  var a = M[0], z = M[M.length - 1];
+  var bpm = 60 * (z.beat_time - a.beat_time) / (z.sample_time - a.sample_time), straight = true;
+  for (var i = 1; i < M.length; i++) {
+    var seg = 60 * (M[i].beat_time - M[i - 1].beat_time) / Math.max(1e-6, M[i].sample_time - M[i - 1].sample_time);
+    if (Math.abs(seg - bpm) / bpm > 0.002) straight = false;
+  }
+  return { bpm: bpm, straight: straight };
+}
+function warpOk(c, bpm) {
+  if (num(c, "warping") != 1) return false;
+  var w = warpBpm(c);
+  return w.straight && Math.abs(w.bpm - bpm) / bpm < 0.0005;
+}
+
+function alignSong() {
+  var cur = state.cur, c = byId(cur.clipId), p = cur.plan;
+  if (warpOk(c, p.bpm)) { alignSong2(); return; }                  // already locked (rebuild)
+  var song = api("live_set");
+  song.set("tempo", p.bpm);
+  say(songTag() + "locking " + cur.name + " at " + p.bpm + " BPM. If Live asks to keep the current timing, click Yes");
+  var wasWarped = num(c, "warping") == 1;
+  if (wasWarped) c.set("warping", 0);                             // re-warp from the original timing
+  var ticks = 0, phase = wasWarped ? "off" : "on";
+  var poll = new Task(function () {
+    ticks++;
+    var w = num(c, "warping");
+    if (phase == "off") {
+      if (w == 0) { song.set("tempo", p.bpm); c.set("warping", 1); phase = "wait"; }
+    } else if (phase == "on") {
+      c.set("warping", 1); phase = "wait";
+    } else if (w == 1 && markers(c).length >= 2) {
+      poll.cancel();
+      later(function () {
+        if (!warpOk(c, p.bpm)) straightenWarp(c, p);                // Live auto-warped instead of keeping timing
+        if (!warpOk(c, p.bpm)) {
+          var got = warpBpm(c).bpm;
+          failSong("could not lock the song at " + p.bpm + " BPM (warp shows " + (Math.round(got * 100) / 100) +
+                   "). Turn Warp on for the clip, click Yes when asked, and build again");
+          return;
+        }
+        alignSong2();
+      }, 300);
+    }
+    if (ticks > 600) { poll.cancel(); failSong("Warp did not switch on (no answer to Live's dialog?)"); }   // 2 min
+  }, this);
+  poll.interval = 200;
+  poll.repeat(-1);
+}
+
+// Fallback (Live auto-warped, or "No" was clicked): keep the first and last warp markers, drop the ones in
+// between, and move the last one so the song runs at exactly its BPM. The audio stays anchored at the first marker.
+function straightenWarp(c, p) {
+  try {
+    var k = p.bpm / 60, M = markers(c);
+    for (var i = M.length - 2; i >= 1; i--) { try { c.call("remove_warp_marker", M[i].beat_time); } catch (e) {} }
+    M = markers(c);
+    var a = M[0], z = M[M.length - 1];
+    c.call("move_warp_marker", z.beat_time, (a.beat_time + (z.sample_time - a.sample_time) * k) - z.beat_time);
+  } catch (e) { post("SeqAnalyzer: straighten failed " + e + "\n"); }
+}
+
+function failSong(msg) {
+  say(songTag() + "Error: " + msg);
+  state.results.push({ name: state.cur.name, error: "Error: " + msg });
+  later(nextSong, 1500);
+}
+
 function alignSong2() {
-  var cur = state.cur, c = byId(cur.clipId), p = cur.plan, m = p.meter, k = p.bpm / 60;
-  var st = num(c, "start_time");
-  var ls = num(c, "loop_start"), le = num(c, "loop_end");           // seconds (unwarped)
-  var raw = st + (p.first_downbeat - ls) * k;                         // arrangement beat of the first downbeat
+  var cur = state.cur, c = byId(cur.clipId), p = cur.plan, m = p.meter;
+  var st = num(c, "start_time"), sm = num(c, "start_marker");
+  var raw = st + (beatAt(markers(c), p.first_downbeat) - sm);       // arrangement beat of the first downbeat
   var snapped = Math.round(raw / m) * m;
   var off = raw - snapped;
   cur.offGrid = Math.abs(off) > SNAP_BEATS ? off : 0;
   cur.bar0 = cur.offGrid ? raw : snapped;
   cur.songStartBeat = Math.floor(st / m) * m;
-  cur.songEndBeat = st + (le - ls) * k;
+  cur.songEndBeat = num(c, "end_time");                              // fixed in beats now that it is warped
   later(makeTracks, 100);
 }
 function barBeat(n) { return state.cur.bar0 + (n - 1) * state.cur.plan.meter; }
@@ -321,6 +400,12 @@ function finishAll() {
     parts.push(r.name.replace(/\.[^.]*$/, "") + " " + p.bpm + " BPM" + (p.bpm_hint ? "" : " (detected)") + ", " +
                r.nSections + " sections, " + r.nCues + " cues");
     if (!p.bpm_hint) unhinted.push(r.clip || r.name);
+    if (p.tempo_alternatives && p.tempo_alternatives.length) {
+      var clipName = String(r.clip || r.name).replace(/\.[^.]*$/, "");
+      notes.push("CHECK THE TEMPO of " + clipName + ": " + p.bpm + " BPM, or maybe " + p.tempo_alternatives.join(" / ") +
+                 "? If it's " + Math.round(p.tempo_alternatives[0]) + ", rename the clip \"" + clipName + " " +
+                 Math.round(p.tempo_alternatives[0]) + "BPM\" and build again");
+    }
     if (p.note) post("SeqAnalyzer: " + r.name + ": " + p.note + "\n");   // details in the Max console
     if (r.offGrid) notes.push(r.name + ": first downbeat is " + Math.abs(r.offGrid).toFixed(2) +
       " beat " + (r.offGrid > 0 ? "after" : "before") + " a bar line - move the clip to line it up with the grid");
@@ -328,8 +413,8 @@ function finishAll() {
     if (r.tempoNote) notes.push(r.name + ": " + r.tempoNote);
     if (p.missingCues.length) notes.push("no cue file for " + p.missingCues.join(", "));
   }
-  if (unhinted.length) notes.push("If a detected BPM is wrong, put the tempo in the clip name (e.g. \"" +
-    String(unhinted[0]).replace(/\.[^.]*$/, "") + " 74BPM\") and build again");
+  var flagged = notes.some(function (n) { return n.indexOf("CHECK THE TEMPO") == 0; });
+  if (unhinted.length && !flagged) notes.push("A detected BPM is wrong? Put the tempo in the clip name (e.g. \"My Song 74BPM\") and build again");
   if (ok.length && ok[0].plan.recordTempo && ok[0].plan.tempoMode != "record" && ok[0].plan.tempoMode != "set") storeSlots(ok);
   say("Done: " + (parts.length ? parts.join(" | ") : "nothing built") + (notes.length ? ". " + notes.join(". ") : "") +
       (ok.length && follow.on ? ". Tempo Follow is on" : ""));
@@ -377,17 +462,15 @@ function init() {                // from live.thisdevice: the Live API is ready
   songObs.property = "current_song_time";
 }
 
+// the song whose range holds the playhead; when ranges touch or overlap, the one that starts last wins
 function slotAt(pos) {
-  var i, s, ok = function (s) { return s && s.bpm >= 20 && s.end > s.start; };
-  for (i = 0; i < follow.slots.length; i++) {        // a song about to start wins (back-to-back songs)
-    s = follow.slots[i];
-    if (ok(s) && pos >= s.start - LOOKAHEAD && pos < s.start) return i;
+  var best = -1;
+  for (var i = 0; i < follow.slots.length; i++) {
+    var s = follow.slots[i];
+    if (!(s && s.bpm >= 20 && s.end > s.start)) continue;
+    if (pos >= s.start - LOOKAHEAD && pos < s.end && (best < 0 || s.start > follow.slots[best].start)) best = i;
   }
-  for (i = 0; i < follow.slots.length; i++) {
-    s = follow.slots[i];
-    if (ok(s) && pos >= s.start && pos < s.end) return i;
-  }
-  return -1;
+  return best;
 }
 
 function checkPos(pos) {

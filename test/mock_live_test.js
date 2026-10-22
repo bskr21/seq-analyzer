@@ -14,11 +14,23 @@ const songTrack = mkTrack("SEQ", true);
 song.tracks.push(mkTrack("1-Click", false), songTrack);
 song.tracks[0].arm = 1;
 const SR = 44100, DUR = 208.192;
-// two songs on one track, both auto-warped by Live on import (the device must switch warping off)
+// two songs on one track, auto-warped by Live on import at a wrong tempo (147 BPM). Switching Warp on mimics
+// Live's "keep the current timing" answer (markers at the set tempo); FAKE_NO=1 mimics answering "No".
 function mkSong(file, start, dur) {
-  const c = reg({ kind: "clip", audio: 1, name: file.replace(/^.*\//, "").replace(/\.wav$/, ""), file_path: file, start_time: start, start_marker: 0, warping: 1,
-    sample_rate: SR, sample_length: Math.round(dur * SR), loop_start: 0, loop_end: dur, dur });
-  c.end_time_fn = x => x.start_time + x.dur * song.tempo / 60;
+  const c = reg({ kind: "clip", audio: 1, name: file.replace(/^.*\//, "").replace(/\.wav$/, ""), file_path: file,
+    start_time: start, start_marker: 0, sample_rate: SR, sample_length: Math.round(dur * SR), loop_start: 0, loop_end: dur, dur,
+    _warping: 1, markers: [{ sample_time: 0, beat_time: 0 }, { sample_time: dur, beat_time: dur * 147 / 60 }] });
+  Object.defineProperty(c, "warping", {
+    get() { return this._warping; },
+    set(v) {
+      if (v && !this._warping) {
+        this._old = this.markers;
+        this.markers = process.env.FAKE_NO ? this._old
+          : [{ sample_time: 0, beat_time: 0 }, { sample_time: this.dur, beat_time: this.dur * song.tempo / 60 }];
+      }
+      this._warping = v ? 1 : 0;
+    } });
+  c.end_time_fn = x => x._warping ? x.start_time + beatAtM(x.markers, x.dur) - x.start_marker : x.start_time + x.dur * song.tempo / 60;
   songTrack.clips.push(c);
   return c;
 }
@@ -110,7 +122,7 @@ const cueDir = process.argv[3];
 function onAnalyze(file) {
   let res = result;
   if (/Kumilikmu/.test(file)) {                     // second song: 74 BPM, 3/4-free simple form
-    res = Object.assign({}, result, { bpm: 74, beat_period: 60 / 74, first_downbeat: 0.0, duration: 120, bars: 37,
+    res = Object.assign({}, result, { tempo_alternatives: process.env.FAKE_ALT ? [98.7] : [], bpm: 74, beat_period: 60 / 74, first_downbeat: 0.0, duration: 120, bars: 37,
       sections: [{ label: "INTRO", start_bar: 1, end_bar: 5 }, { label: "VERSE 1", start_bar: 5, end_bar: 21 },
                  { label: "CHORUS", start_bar: 21, end_bar: 38 }] });
   }
@@ -125,15 +137,17 @@ setTimeout(() => {
   console.log("\nSECTIONS:"); sec.clips.forEach(c => console.log("  %s %d-%d", c.name.padEnd(13), c.start_time, c.end_time));
   console.log("\nCUES (first 12):"); cue.clips.slice(0, 12).forEach(c => console.log("  %s @%d warp=%d len=%ss %s", c.name.padEnd(13), c.start_time, c.warping, c.loop_end.toFixed(3), path.basename(c.file)));
   console.log("  ... total", cue.clips.length);
-  console.log("\nSONG CLIPS warping:", songClip.warping, song2.warping, "(0 = original speed)");
+  const bpmOf = c => (60 * (c.markers[c.markers.length - 1].beat_time - c.markers[0].beat_time) / (c.markers[c.markers.length - 1].sample_time - c.markers[0].sample_time)).toFixed(3);
+  console.log("\nSONG CLIPS: warping", songClip.warping, song2.warping, "| warp BPM", bpmOf(songClip), bpmOf(song2),
+    "| end beats", songClip.end_time_fn(songClip).toFixed(2), song2.end_time_fn(song2).toFixed(2));
   // re-run to check track reuse
   ctx.build();
   setTimeout(() => {
     console.log("\nRE-RUN tracks:", song.tracks.map(t => t.name).join(" | "), "| sections:", song.tracks.find(t => t.name === "SECTIONS").clips.length, "cues:", song.tracks.find(t => t.name === "GUIDE CUES").clips.length);
     console.log(status[status.length - 1]);
     sweep().then(() => process.exit(0));
-  }, 9000);
-}, 9000);
+  }, 20000);
+}, 20000);
 
 // ---- tempo follow: move the playhead through the set like Live does and watch the tempo
 async function sweep() {

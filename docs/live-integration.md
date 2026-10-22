@@ -8,7 +8,7 @@ Reference: [Live Object Model](https://docs.cycling74.com/apiref/lom/).
 | Purpose | Object | Call / property |
 |---|---|---|
 | Find the song | `this_device canonical_parent` | `has_audio_input`, `arrangement_clips`, clip `is_audio_clip`, `file_path`, `start_time`, `end_time` |
-| Place song | Clip | `warping` (set to 0), `loop_start`, `loop_end`, `sample_length`, `sample_rate` |
+| Lock song | Clip + Song | `song.tempo`, `warping`, `warp_markers`, `remove_warp_marker`, `move_warp_marker`, `start_marker`, `end_time` |
 | Tracks | Song | `create_midi_track(index)`, `create_audio_track(index)`; Track `name` |
 | Section clips | Track | `create_midi_clip(start, length)`; Clip `name`, `color` |
 | Cue clips | Track | `create_audio_clip(path, position)`; Clip `warping = 0`, `loop_end` (seconds when unwarped) |
@@ -18,14 +18,19 @@ Reference: [Live Object Model](https://docs.cycling74.com/apiref/lom/).
 Live applies some property changes (notably `warping`) later rather than immediately, so steps are spaced
 with `Task` timers (100–500 ms).
 
-## Placing a song on the grid (unwarped)
-1. If Live auto-warped the clip on import, set `warping = 0` and wait 500 ms (Live applies it later).
-2. Read `start_time` (beats) and `loop_start` / `loop_end`, which are seconds for unwarped clips.
-3. Arrangement beat of file time *t*, while the song plays at its BPM: `start_time + (t − loop_start) · bpm/60`.
-4. The first downbeat's beat is snapped to the nearest bar line when it's within 0.25 beat (decoder delay and
-   detection jitter). Otherwise sections follow the audio exactly, and the status line suggests moving the clip.
-5. Song end = `start_time + (loop_end − loop_start) · bpm/60`. `end_time` isn't used, because for unwarped clips it
-   depends on the current set tempo.
+## Locking a song at its BPM (warped)
+1. If the clip is already warped as one straight line at exactly the song's BPM (a rebuild), nothing changes.
+2. Otherwise: set `song.tempo` to the song's BPM; if the clip is warped, switch Warp off; then switch Warp **on**.
+   Live keeps the current timing, so the song is warped at exactly the BPM. Live may ask about this; the device
+   polls every 200 ms (up to 2 minutes) until Warp is on.
+3. Check: the warp markers must form one straight line at the BPM (±0.05%). If Live auto-warped instead, or "No" was
+   clicked, the device keeps the first and last markers, removes the rest, and moves the last one to the exact BPM.
+   If that still fails, the song is reported and skipped.
+4. Position: the arrangement beat of the first downbeat is `start_time + (beat_at(first_downbeat) − start_marker)`,
+   snapped to the bar line when within 0.25 beat. The song end is the clip's `end_time` (fixed in beats now).
+
+Why not unwarped (v0.5.0)? An unwarped clip's length in beats follows the current set tempo, so at another song's tempo
+it grows into the next song and its Tempo Follow range overlaps the next one's.
 
 ## Cue placement
 For a section starting at arrangement beat `S`:
@@ -43,7 +48,7 @@ Three modes (`tempoMode`):
   `start` is the bar line of the first cue or the song start, whichever is earlier; `end` is the end of the last section clip.
 - An observer on `live_set current_song_time` checks every playhead update. When the playhead **enters** a song's
   range (`start − 0.25 beat` up to `end`, from outside it, including jumps), the device sets `song.tempo` to that song's
-  BPM. When songs are back to back, the upcoming song wins inside the 0.25-beat lookahead.
+  BPM. When ranges touch or overlap, the song that starts last wins.
   The Live API doesn't allow changes inside a notification, so the change is deferred with a `Task`.
 - It acts only on entering, so a tempo change made mid-song is kept. The **Tempo Follow** switch (saved with the set) turns it off.
 - The 0.25-beat lookahead covers the notification interval (roughly 50 ms).

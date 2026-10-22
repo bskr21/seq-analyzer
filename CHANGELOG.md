@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.7.0 (2026-10-22)
+- **Songs are warped again, at exactly their own BPM** (set the tempo, then Warp on with "keep the current timing";
+  verified from the warp markers, with a fallback that straightens them). v0.5.0's unwarped songs changed length with
+  the set tempo, ran into the next song, and made Tempo Follow flip tempos mid-song.
+- **Tempo Follow:** when ranges touch or overlap, the song that starts last wins.
+- **Much less memory and disk:** the vocal check uses a 60-second excerpt (two stems), so instrumental tracks never get a
+  full stem separation; full separation (vocal songs only) runs with smaller segments.
+- **Tempo ambiguity check:** songs whose tempo could be 4/3, 3/4, 2/3 or 3/2 of the detected one are named in the
+  final status with the likely alternative.
+
 ## v0.6.0 (2026-10-21)
 - **BPM hint:** a tempo in the clip name, file name or folder (`74BPM`, `F#150`, `E113`…) limits beat tracking to ±6%
   of it. Fixes 4/3× and 2× errors (a 74 BPM song was detected as 99.44). Renaming the clip is the per-song override;

@@ -141,7 +141,7 @@ function makePlan(result, cfg) {
     first_downbeat: result.first_downbeat, bars: result.bars, duration: result.duration,
     tempo_stable: result.tempo_stable, tempo_range: result.tempo_range, engine: result.engine,
     sections, counts, leadBars: cfg.leadBars, recordTempo: !!cfg.recordTempo, tempoMode: cfg.tempoMode || "follow",
-    note: result.note || "", bpm_hint: result.bpm_hint || null,
+    note: result.note || "", bpm_hint: result.bpm_hint || null, tempo_alternatives: result.tempo_alternatives || [],
     missingCues: Array.from(missing)
   };
 }

@@ -39,6 +39,7 @@ def track_beats(path, hint=None):
         from madmom.features.downbeats import RNNDownBeatProcessor, DBNDownBeatTrackingProcessor
         act = RNNDownBeatProcessor()(path)
         res = DBNDownBeatTrackingProcessor(beats_per_bar=[3, 4], fps=100, min_bpm=lo, max_bpm=hi)(act)
+        track_beats.activations = act
         return res[:, 0], res[:, 1].astype(int), "madmom"
     except Exception as e:  # pragma: no cover
         log("madmom unavailable (%s), using librosa beat tracker" % e.__class__.__name__)
@@ -47,6 +48,33 @@ def track_beats(path, hint=None):
         _, beats = librosa.beat.beat_track(y=y, sr=22050, tightness=300, start_bpm=hint or 120.0)
         bt = librosa.frames_to_time(beats, sr=22050)
         return bt, (np.arange(len(bt)) % 4) + 1, "librosa"
+
+
+track_beats.activations = None
+
+
+def tempo_alternatives(act, bpm, margin=0.12):
+    """Beat-tracker confidence (log-probability per frame) at related tempi. Returns the alternatives
+    (3/4, 4/3, 2/3, 3/2 of the detected tempo) that score within `margin` of the best path.
+    On a clear song the true tempo wins by 0.18 or more; halving/doubling is always close, so it isn't checked."""
+    from madmom.features.downbeats import DBNDownBeatTrackingProcessor
+
+    def score(lo, hi):
+        p = DBNDownBeatTrackingProcessor(beats_per_bar=[3, 4], fps=100, min_bpm=lo, max_bpm=hi)
+        a = act
+        if p.threshold:
+            idx = np.nonzero(act >= p.threshold)[0]
+            if idx.any():
+                a = act[idx.min():idx.max() + 1]
+        return max(h.viterbi(a)[1] for h in p.hmms) / len(a)
+
+    ref = score(bpm * 0.97, bpm * 1.03)
+    close = []
+    for r in (0.75, 4.0 / 3, 2.0 / 3, 1.5):
+        alt = bpm * r
+        if 45 <= alt <= 220 and ref - score(alt * 0.96, alt * 1.04) < margin:
+            close.append(round(alt, 1))
+    return close
 
 
 def fit_grid(bt, pos):
@@ -114,7 +142,7 @@ def number_labels(secs):
 CACHE = os.path.join(os.path.expanduser("~"), "Library", "Caches", "AICueBuilder")
 TIMING = os.path.join(CACHE, "timing.json")
 # seconds of work per second of audio (first-run guesses; learned afterwards)
-DEFAULT_RATES = {"decode": 0.01, "beats": 0.12, "demix": 0.45, "model": 0.35, "features": 0.12}
+DEFAULT_RATES = {"decode": 0.01, "beats": 0.12, "vocals": 0.06, "tempo": 0.03, "demix": 0.45, "model": 0.35, "features": 0.12}
 
 
 class Progress:
@@ -200,15 +228,17 @@ class Progress:
 
 
 # --------------------------------------------------------------------------- stems (Demucs) with live progress
-def demix(path, prog):
-    """Separate stems with HTDemucs; returns the folder holding bass/drums/other/vocals.wav."""
+def demix(path, prog, two_stems=False):
+    """Separate stems with HTDemucs; returns the folder holding the stem WAVs.
+    two_stems=True gives vocals.wav + no_vocals.wav (used for the quick vocal check)."""
     import subprocess, re
     out = os.path.join(CACHE, "demix")
     stem_dir = os.path.join(out, "htdemucs", os.path.splitext(os.path.basename(path))[0])
     import shutil
     shutil.rmtree(stem_dir, ignore_errors=True)          # never reuse stems from another song
-    p = subprocess.Popen([sys.executable, "-m", "demucs.separate", "--out", out, "--name", "htdemucs",
-                          "--device", "cpu", path], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    cmd = [sys.executable, "-m", "demucs.separate", "--out", out, "--name", "htdemucs", "--device", "cpu",
+           "--segment", "7", "-j", "1"] + (["--two-stems", "vocals"] if two_stems else []) + [path]
+    p = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     buf, err = b"", b""
     pat = re.compile(rb"(\d{1,3})%\|")
     while True:
@@ -229,10 +259,32 @@ def vocal_share(stem_dir):
     """Fraction of the mix energy that is lead/backing vocals (0..1)."""
     import soundfile as sf
     e = {}
-    for s in ("bass", "drums", "other", "vocals"):
-        y, _ = sf.read(os.path.join(stem_dir, s + ".wav"), dtype="float32")
-        e[s] = float(np.mean(y.astype(np.float64) ** 2))
+    for s in ("bass", "drums", "other", "vocals", "no_vocals"):
+        f = os.path.join(stem_dir, s + ".wav")
+        if os.path.isfile(f):
+            y, _ = sf.read(f, dtype="float32")
+            e[s] = float(np.mean(y.astype(np.float64) ** 2))
     return e["vocals"] / max(1e-12, sum(e.values()))
+
+
+def vocal_check(path, prog, seconds=20, parts=3):
+    """Quick vocal share from a short excerpt (3 x 20 s), so instrumental tracks never need full stems."""
+    import soundfile as sf, shutil
+    info = sf.info(path)
+    sr, n = info.samplerate, info.frames
+    pieces = []
+    for f in [(i + 1) / (parts + 1) for i in range(parts)]:
+        start = max(0, int(n * f) - seconds * sr // 2)
+        y, _ = sf.read(path, start=start, frames=seconds * sr, dtype="float32", always_2d=True)
+        pieces.append(y)
+    ex = os.path.join(CACHE, "vocalcheck.wav")
+    sf.write(ex, np.concatenate(pieces), sr)
+    stems = demix(ex, prog, two_stems=True)
+    try:
+        return vocal_share(stems)
+    finally:
+        shutil.rmtree(stems, ignore_errors=True)
+        os.unlink(ex)
 
 
 # --------------------------------------------------------------------------- engine 1: All-In-One
@@ -406,7 +458,7 @@ def main():
     except Exception:
         import librosa
         duration = librosa.get_duration(path=src)
-    stages = ["decode", "beats"] + (["demix", "model"] if args.engine != "heuristic" else []) + ["features"]
+    stages = ["decode", "beats", "tempo"] + (["vocals", "demix", "model"] if args.engine != "heuristic" else []) + ["features"]
     prog = Progress(duration, stages)
 
     # work on a WAV copy named after the song (no ffmpeg needed; stable stem-folder name)
@@ -430,18 +482,31 @@ def main():
     bar_len = grid["beat_period"] * grid["meter"]
     nbars = int(np.floor((duration - grid["first_downbeat"]) / bar_len + 0.25))
     log("tempo %.2f BPM, %d/4, %d bars" % (grid["bpm"], grid["meter"], nbars))
+    alternatives = []
+    if hint:
+        prog.skip("tempo")
+    elif track_beats.activations is not None:
+        prog.start("tempo", "double-checking the tempo")
+        try:
+            alternatives = tempo_alternatives(track_beats.activations, grid["bpm"])
+        except Exception as e:
+            log("tempo check skipped (%s)" % e.__class__.__name__)
+        if alternatives:
+            log("tempo uncertain: %g BPM, or maybe %s" % (grid["bpm"], " / ".join("%g" % a for a in alternatives)))
 
     secs, engine, vshare, note = None, None, None, ""
     if args.engine in ("auto", "allin1"):
         try:
-            prog.start("demix", "separating stems (vocals, drums, bass, other)")
-            stems = demix(path, prog)
-            vshare = vocal_share(stems)
+            prog.start("vocals", "checking for vocals")
+            vshare = vocal_check(path, prog) if args.engine == "auto" else 1.0
             if args.engine == "auto" and vshare < args.vocal_threshold:
                 note = "instrumental track (vocals %.0f%%): using repetition analysis" % (100 * vshare)
                 log(note)
+                prog.skip("demix")
                 prog.skip("model")
             else:
+                prog.start("demix", "separating stems (vocals, drums, bass, other)")
+                demix(path, prog)
                 prog.start("model", "running AI structure model (vocals %.0f%%)" % (100 * vshare))
                 secs = sections_allin1(path, grid, nbars)
                 kinds = {x["kind"] for x in secs}
@@ -476,6 +541,7 @@ def main():
     shutil.rmtree(os.path.join(CACHE, "demix", "htdemucs", base), ignore_errors=True)
     result = dict(file=src, duration=round(duration, 3), beat_engine=beat_engine, engine=engine,
                   vocal_share=None if vshare is None else round(vshare, 3), note=note, bpm_hint=hint,
+                  tempo_alternatives=alternatives,
                   bars=nbars, sections=secs, **grid)
     js = json.dumps(result, indent=1)
     if args.out:

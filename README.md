@@ -3,7 +3,8 @@
 A Max for Live device that prepares a worship/playback **sequence** in one click. You drop a song
 into Live's Arrangement and press **Analyze & Build**. The device then:
 
-1. **Detects the BPM** and bar grid of every song on the track. Songs play **unwarped**, at their original speed.
+1. **Detects the BPM** and bar grid of every song on the track, and warps each song at exactly its own BPM
+   (original speed, fixed length in beats, so songs never run into each other).
 2. **Follows the song's tempo:** whenever the playhead enters the song (from its first cue to the end of its last
    section), Live's tempo switches to the song's BPM. No automation, no saving, no extra playback.
 3. **Finds the song structure** (Intro, Verse, Chorus, Bridge, Instrumental, Breakdown, Outro…).
@@ -11,7 +12,7 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
 5. Creates a **GUIDE CUES** audio track with spoken cues from your own cue pack: the section name
    two bars ahead, then "1 2 3 4" in the bar before the section.
 
-> Status: **v0.6.0, prototype.** Tested against a simulated Live API and real song analysis,
+> Status: **v0.7.0, prototype.** Tested against a simulated Live API and real song analysis,
 > but not yet run inside Live itself. See [Known limitations](#known-limitations).
 
 ## Requirements
@@ -35,6 +36,7 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
    sit one after another on the same track (audio clips shorter than 30 s, like sound effects, are skipped).
 2. Drop **Sequencer Analyzer** (Browser → Max for Live) on that same track.
 3. First time: **Choose Cue Folder** → select your cue pack folder.
+   While building, Live may ask *"Would you like to keep the current timing of the clip(s)?"*: click **Yes**.
 4. Click **Analyze & Build**. A progress bar shows how far along the analysis is and the time left.
    All songs on the track are processed in order into the same SECTIONS / GUIDE CUES tracks.
 5. Keep the device on the track: with **Tempo Follow: On** it switches the tempo whenever playback enters a song
@@ -44,7 +46,8 @@ Re-building is quick: each song's analysis is cached, so only new or changed fil
 
 ### Getting the tempo right
 Beat trackers can lock onto 2×, ½× or 4/3× the real tempo (for example, 99 instead of 74 BPM on a ballad with a
-syncopated feel). If a tempo appears in the **clip name**, the **file name** or a **parent folder**
+syncopated feel). Songs whose tempo looks ambiguous are named in the final status ("CHECK THE TEMPO of …").
+If a tempo appears in the **clip name**, the **file name** or a **parent folder**
 (`74BPM`, `74 bpm`, or key+tempo like `F#150`, `E113`), the device searches only within 6% of it. To fix a wrong BPM,
 rename the clip in Live, for example `KUMILIKMU BRIDGE 2X 74BPM`, and press Analyze & Build again. The clip name wins.
 Section detection depends on the bar grid, so a corrected tempo also fixes the sections.

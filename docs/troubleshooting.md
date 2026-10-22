@@ -11,6 +11,11 @@
 | "Would you like to keep the current timing of the clip(s)?" (v0.4.0) | The device changed warp markers | Update to v0.5.0: songs stay unwarped |
 | `first downbeat is … beat after/before a bar line` | The clip doesn't start on the grid | Move the clip by that amount, then build again |
 | Sections look shifted while the set is stopped | Unwarped clips are drawn at the current set tempo | Start playback in the song (Tempo Follow sets its BPM) or set the tempo by hand |
+| Disk fills up / Mac very slow during "separating stems" (v0.6.0) | Full stem separation of a long song (memory swap) | Update to v0.7.0: instrumental tracks only get a 60-second vocal check |
+| Songs run into each other / tempo flips inside a song (v0.5.0) | Unwarped clips change length with the set tempo | Update to v0.7.0: songs are warped at their own BPM |
+| "Keep the current timing of the clip(s)?" | The device switches Warp on at the song's BPM | Click **Yes** |
+| `could not lock the song at … BPM` | Warp couldn't be set to the song's BPM | Turn Warp on for the clip yourself, click Yes, and build again |
+| `CHECK THE TEMPO of …` | The tracker found a close alternative tempo | Listen; if the other tempo is right, put it in the clip name |
 | Wrong BPM (often 4/3×, 2× or ½× the real tempo) and messy sections | Ambiguous beat (syncopation, shuffle) | Put the tempo in the clip name (`Song 74BPM`) and build again |
 | A song wasn't analyzed | Clip shorter than 30 s, or more than 16 songs on the track | Use longer clips; split very long medleys across two tracks |
 | Old labels after changing a song file | — | Cached analyses are keyed on file date and size; delete `~/Library/Caches/AICueBuilder/results` to force a fresh analysis |

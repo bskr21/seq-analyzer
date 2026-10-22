@@ -10,6 +10,9 @@ Compressed formats (MP3, M4A…) are decoded to a temporary WAV first, so ffmpeg
 - **madmom** `RNNDownBeatProcessor` + `DBNDownBeatTrackingProcessor` (3/4 or 4/4, 55–215 BPM).
   With `--bpm-hint X`, only tempi within ±6% of X are considered, which rules out 2×, ½× and 4/3× errors.
   The device takes the hint from the clip name, the file name or a parent folder (see the README).
+- **Ambiguity check** (no hint): the tracker's best-path log-probability per frame at the detected tempo is compared
+  with 3/4, 4/3, 2/3 and 3/2 of it. Alternatives within 0.12 are reported in `tempo_alternatives`. On GJT the true
+  tempo wins by 0.18 or more; halving is always close (0.06), so ×½ and ×2 aren't checked.
   Falls back to librosa's beat tracker if madmom is missing.
 - **Grid fit:** a robust linear fit `t = a + b·k` over all beat times (iteratively drops outliers).
   `bpm = 60 / b`. The downbeat phase is the `k mod meter` that madmom marks as beat 1 most often.
@@ -21,11 +24,13 @@ Bar *n* starts at `first_downbeat + (n−1) · meter · beat_period`.
 ## 2. Sections
 
 ### Choosing the engine (`--engine auto`)
-1. Separate the stems with HTDemucs (the slowest stage, which reports real progress).
-2. Measure the **vocal share**: the vocal stem's energy as a fraction of all stems.
+1. **Vocal check on an excerpt:** three 20-second pieces (at 25%, 50% and 75% of the song) go through HTDemucs in
+   two-stem mode (vocals / no vocals). It's fast and light on memory.
+2. The **vocal share** is the vocal stem's energy as a fraction of the total.
 3. If it's below `--vocal-threshold` (default 0.12), the song is an **instrumental backing track**, so use Engine B.
    The AI model is trained on full songs and labels nearly everything `inst` when there's no singing.
-4. Otherwise run Engine A. If its result has neither a verse nor a chorus, fall back to Engine B.
+4. Otherwise separate the full song into four stems (`--segment 7 -j 1` to limit memory) and run Engine A.
+   If its result has neither a verse nor a chorus, fall back to Engine B.
 
 The `note` field in the output says which path was taken.
 
