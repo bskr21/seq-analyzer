@@ -198,7 +198,7 @@ function analyze(file, hint) {
 }
 
 // analysis results are cached per file (path, size, date) and per analysis settings
-const ENGINE_VERSION = "0.5";
+const ENGINE_VERSION = "0.7";
 function cacheFile(file, hint) {
   const cfg = loadConfig(), st = fs.statSync(file);
   const key = [ENGINE_VERSION, file, st.size, st.mtimeMs, cfg.structure, cfg.vocalThreshold, hint ? hint.bpm : ""].join("|");
