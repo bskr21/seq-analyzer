@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.7.1 (2026-10-22)
+- **Fix: "could not lock the song".** Live applies a tempo change after a short delay, so Warp was switched on at
+  the previous tempo. The device now waits until Live reports the song's BPM before switching Warp on.
+- **Fix: rebuilds re-warped correct songs.** Live's hidden end marker made a correctly warped song look wrong.
+  It's now ignored in the check.
+- **Fallback rebuilt:** if Live auto-warps or "No" is clicked, the warp map is rebuilt as one straight line under the
+  hidden end marker (which can't be moved), with the first downbeat on a bar line.
+- Warp markers before/after are logged to the Max console; tempo automation that blocks the tempo is reported.
+
 ## v0.7.0 (2026-10-22)
 - **Songs are warped again, at exactly their own BPM** (set the tempo, then Warp on with "keep the current timing";
   verified from the warp markers, with a fallback that straightens them). v0.5.0's unwarped songs changed length with

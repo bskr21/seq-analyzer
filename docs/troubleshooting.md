@@ -14,7 +14,9 @@
 | Disk fills up / Mac very slow during "separating stems" (v0.6.0) | Full stem separation of a long song (memory swap) | Update to v0.7.0: instrumental tracks only get a 60-second vocal check |
 | Songs run into each other / tempo flips inside a song (v0.5.0) | Unwarped clips change length with the set tempo | Update to v0.7.0: songs are warped at their own BPM |
 | "Keep the current timing of the clip(s)?" | The device switches Warp on at the song's BPM | Click **Yes** |
-| `could not lock the song at … BPM` | Warp couldn't be set to the song's BPM | Turn Warp on for the clip yourself, click Yes, and build again |
+| `could not lock the song at … BPM (warp shows <previous song's tempo>)` (v0.7.0) | Live applied the tempo change after Warp was switched on | Update to v0.7.1 |
+| `could not lock the song at … BPM` (v0.7.1+) | The warp map couldn't be rebuilt | Open the device in Max (edit button) → Window → Max Console and send the `warp before/after` lines |
+| `Live did not accept tempo …` | Tempo automation in the set overrides the tempo | Delete the tempo automation (Tempo Follow replaces it) and build again |
 | `CHECK THE TEMPO of …` | The tracker found a close alternative tempo | Listen; if the other tempo is right, put it in the clip name |
 | Wrong BPM (often 4/3×, 2× or ½× the real tempo) and messy sections | Ambiguous beat (syncopation, shuffle) | Put the tempo in the clip name (`Song 74BPM`) and build again |
 | A song wasn't analyzed | Clip shorter than 30 s, or more than 16 songs on the track | Use longer clips; split very long medleys across two tracks |

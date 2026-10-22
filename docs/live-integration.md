@@ -20,12 +20,17 @@ with `Task` timers (100–500 ms).
 
 ## Locking a song at its BPM (warped)
 1. If the clip is already warped as one straight line at exactly the song's BPM (a rebuild), nothing changes.
-2. Otherwise: set `song.tempo` to the song's BPM; if the clip is warped, switch Warp off; then switch Warp **on**.
-   Live keeps the current timing, so the song is warped at exactly the BPM. Live may ask about this; the device
-   polls every 200 ms (up to 2 minutes) until Warp is on.
-3. Check: the warp markers must form one straight line at the BPM (±0.05%). If Live auto-warped instead, or "No" was
-   clicked, the device keeps the first and last markers, removes the rest, and moves the last one to the exact BPM.
-   If that still fails, the song is reported and skipped.
+   Live keeps a **hidden end marker** after the last visible warp marker (only used for the final segment's BPM),
+   so it's left out of this check.
+2. Otherwise, in order, waiting for Live to confirm each step (Live applies these changes later, not immediately):
+   switch Warp off → set `song.tempo` to the song's BPM and wait until Live reports it → switch Warp **on**.
+   Live keeps the current timing, so the song is warped at exactly the BPM. Live may ask about this; the device waits
+   up to 2 minutes for the answer.
+3. Check: the visible warp markers must form one straight line at the BPM (±0.05%). If not (Live auto-warped, or
+   "No" was clicked), the warp map is rebuilt as one straight line `beat = c + k·t` from the first marker to a new
+   marker near the end of the file. The hidden end marker can't be moved, so the line is kept below it, and `c` is
+   chosen so the first downbeat falls on a bar line. If that still fails, the song is reported and skipped.
+   Marker lists before and after are written to the Max console.
 4. Position: the arrangement beat of the first downbeat is `start_time + (beat_at(first_downbeat) − start_marker)`,
    snapped to the bar line when within 0.25 beat. The song end is the clip's `end_time` (fixed in beats now).
 

@@ -9,6 +9,7 @@
 | NATTEN stand-in vs brute-force neighborhood attention (1D and 2D, with dilation) | max error < 1e-6 |
 | All-In-One network forward pass (random weights) | runs; output shapes correct |
 | Engine stages with a stand-in Demucs (v0.2.0) | stem progress parsed; instrumental track (vocal share 0.1%) → repetition analysis, same labels; vocal track (75%) → AI-model path reuses the stems and extracts spectrograms (model download blocked in the test sandbox) |
+| Warping (v0.7.1, simulated with Live's behavior from the field test: tempo applies ~120 ms late, hidden end marker that can't be removed or moved) | the v0.7.0 script reproduces the field error ("warp shows" the previous tempo). v0.7.1: both songs locked at 150.000 / 74.000 BPM, and a second run reuses everything. Answering "No": the fallback rebuilds a straight line under the hidden marker, first downbeat on a bar line |
 | Warping (v0.7.0, simulated) | clips auto-warped at a wrong 147 BPM. "Yes" answer: locked at exactly 150.000 and 74.000 BPM, song ends fixed at 584.48 and 748.00 beats. "No" answer: the fallback straightens the markers, same result |
 | Tempo ambiguity check (v0.7.0) | GJT: no alternative flagged (best 150 BPM at −2.649/frame; 3/4 −3.005, 4/3 −2.965, 2/3 −2.827). Not yet checked on a song that is truly ambiguous |
 | Vocal check on excerpt (v0.7.0, stand-in Demucs) | only a 60 s excerpt is separated (two stems); instrumental → no full separation; stems cleaned up |

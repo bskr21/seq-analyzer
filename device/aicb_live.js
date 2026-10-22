@@ -145,9 +145,18 @@ function beatAt(M, t) {
   var a = M[i], b = M[i + 1];
   return a.beat_time + (t - a.sample_time) * (b.beat_time - a.beat_time) / (b.sample_time - a.sample_time);
 }
+// The warp markers that matter: Live keeps a hidden marker after the last visible one (only used for the BPM of
+// the final segment), so with 3 or more markers the last one is ignored.
+function visibleMarkers(c) {
+  var M = markers(c);
+  return M.length >= 3 ? M.slice(0, M.length - 1) : M;
+}
+function fmtMarkers(c) {
+  return JSON.stringify(markers(c).map(function (m) { return [Math.round(m.sample_time * 1000) / 1000, Math.round(m.beat_time * 1000) / 1000]; }));
+}
 // BPM of the clip's warp map, and whether it is one straight line (no tempo changes inside)
 function warpBpm(c) {
-  var M = markers(c);
+  var M = visibleMarkers(c);
   if (M.length < 2) return { bpm: 0, straight: false };
   var a = M[0], z = M[M.length - 1];
   var bpm = 60 * (z.beat_time - a.beat_time) / (z.sample_time - a.sample_time), straight = true;
@@ -163,51 +172,83 @@ function warpOk(c, bpm) {
   return w.straight && Math.abs(w.bpm - bpm) / bpm < 0.0005;
 }
 
-function alignSong() {
-  var cur = state.cur, c = byId(cur.clipId), p = cur.plan;
-  if (warpOk(c, p.bpm)) { alignSong2(); return; }                  // already locked (rebuild)
-  var song = api("live_set");
-  song.set("tempo", p.bpm);
-  say(songTag() + "locking " + cur.name + " at " + p.bpm + " BPM. If Live asks to keep the current timing, click Yes");
-  var wasWarped = num(c, "warping") == 1;
-  if (wasWarped) c.set("warping", 0);                             // re-warp from the original timing
-  var ticks = 0, phase = wasWarped ? "off" : "on";
-  var poll = new Task(function () {
-    ticks++;
-    var w = num(c, "warping");
-    if (phase == "off") {
-      if (w == 0) { song.set("tempo", p.bpm); c.set("warping", 1); phase = "wait"; }
-    } else if (phase == "on") {
-      c.set("warping", 1); phase = "wait";
-    } else if (w == 1 && markers(c).length >= 2) {
-      poll.cancel();
-      later(function () {
-        if (!warpOk(c, p.bpm)) straightenWarp(c, p);                // Live auto-warped instead of keeping timing
-        if (!warpOk(c, p.bpm)) {
-          var got = warpBpm(c).bpm;
-          failSong("could not lock the song at " + p.bpm + " BPM (warp shows " + (Math.round(got * 100) / 100) +
-                   "). Turn Warp on for the clip, click Yes when asked, and build again");
-          return;
-        }
-        alignSong2();
-      }, 300);
-    }
-    if (ticks > 600) { poll.cancel(); failSong("Warp did not switch on (no answer to Live's dialog?)"); }   // 2 min
+// Wait until a condition holds (polling every 100 ms), then continue; give up after secs seconds.
+function waitFor(cond, secs, then, onTimeout) {
+  var t0 = Date.now();
+  var task = new Task(function () {
+    var ok = false;
+    try { ok = cond(); } catch (e) {}
+    if (ok) { task.cancel(); later(then, 150); }
+    else if (Date.now() - t0 > secs * 1000) { task.cancel(); onTimeout(); }
   }, this);
-  poll.interval = 200;
-  poll.repeat(-1);
+  task.interval = 100;
+  task.repeat(-1);
 }
 
-// Fallback (Live auto-warped, or "No" was clicked): keep the first and last warp markers, drop the ones in
-// between, and move the last one so the song runs at exactly its BPM. The audio stays anchored at the first marker.
+function alignSong() {
+  var cur = state.cur, c = byId(cur.clipId), p = cur.plan, song = api("live_set");
+  post("SeqAnalyzer: " + cur.name + " warp before: on=" + num(c, "warping") + " " + fmtMarkers(c) + "\n");
+  if (warpOk(c, p.bpm)) { alignSong2(); return; }                  // already locked (rebuild)
+  say(songTag() + "locking " + cur.name + " at " + p.bpm + " BPM. If Live asks to keep the current timing, click Yes");
+  var tempoIs = function () { return Math.abs(num(song, "tempo") - p.bpm) < 0.001; };
+  // 1. warp off  2. tempo = song BPM, confirmed by Live  3. warp on ("keep the current timing")  4. check
+  var step3 = function () {
+    c.set("warping", 1);
+    waitFor(function () { return num(c, "warping") == 1 && markers(c).length >= 2; }, 120, step4,
+            function () { failSong("Warp did not switch on (no answer to Live's dialog?)"); });
+  };
+  var step2 = function () {
+    song.set("tempo", p.bpm);
+    waitFor(tempoIs, 5, step3, function () {
+      failSong("Live did not accept tempo " + p.bpm + " (tempo automation in the set? delete it and build again)");
+    });
+  };
+  var step4 = function () {
+    post("SeqAnalyzer: " + cur.name + " warp after: " + fmtMarkers(c) + "\n");
+    if (!warpOk(c, p.bpm)) {                                        // Live auto-warped, or "No" was clicked
+      straightenWarp(c, p);
+      post("SeqAnalyzer: " + cur.name + " warp straightened: " + fmtMarkers(c) + "\n");
+    }
+    if (!warpOk(c, p.bpm)) {
+      failSong("could not lock the song at " + p.bpm + " BPM (warp shows " + (Math.round(warpBpm(c).bpm * 100) / 100) +
+               "). Details are in the Max console");
+      return;
+    }
+    alignSong2();
+  };
+  if (num(c, "warping") == 1) {
+    c.set("warping", 0);
+    waitFor(function () { return num(c, "warping") == 0; }, 5, step2, function () { failSong("could not switch Warp off"); });
+  } else step2();
+}
+
+// Fallback (Live auto-warped, or "No" was clicked): rebuild the warp map as one straight line at the song's BPM,
+// beat(t) = c + k*t, using the first marker and a new one near the end of the file. Live's hidden end marker can't
+// be moved, so the line must stay below it; within that limit c is chosen so the first downbeat lands on a bar line.
 function straightenWarp(c, p) {
+  var k = p.bpm / 60, m = p.meter;
   try {
-    var k = p.bpm / 60, M = markers(c);
-    for (var i = M.length - 2; i >= 1; i--) { try { c.call("remove_warp_marker", M[i].beat_time); } catch (e) {} }
-    M = markers(c);
-    var a = M[0], z = M[M.length - 1];
-    c.call("move_warp_marker", z.beat_time, (a.beat_time + (z.sample_time - a.sample_time) * k) - z.beat_time);
-  } catch (e) { post("SeqAnalyzer: straighten failed " + e + "\n"); }
+    var len = num(c, "sample_length") / num(c, "sample_rate");
+    var M = markers(c), hidden = M.length >= 3 ? M[M.length - 1] : null;
+    var V = visibleMarkers(c), a = V[0];
+    for (var i = V.length - 1; i >= 1; i--) { try { c.call("remove_warp_marker", V[i].beat_time); } catch (e) {} }
+    var tA = a.sample_time, tB = Math.min(len - 0.05, hidden ? hidden.sample_time - 0.05 : len - 0.05);
+    var st = num(c, "start_time"), sm = num(c, "start_marker");
+    var cMax = hidden ? hidden.beat_time - k * tB - 0.01 : 1e9;        // keep beat(tB) below the hidden marker
+    var cNow = a.beat_time - k * tA;                                      // keeps the audio where it is
+    var cBase = Math.min(cNow, cMax);
+    // first downbeat on a bar line: st + (c + k*t0 - sm) = multiple of m
+    var j = Math.floor((st + cBase + k * p.first_downbeat - sm) / m);
+    var cc = m * j - st + sm - k * p.first_downbeat;
+    var newA = cc + k * tA, newB = cc + k * tB;
+    if (newA < a.beat_time) {                                             // keep markers in order while changing them
+      c.call("move_warp_marker", a.beat_time, newA - a.beat_time);
+      c.call("add_warp_marker", { beat_time: newB, sample_time: tB });
+    } else {
+      c.call("add_warp_marker", { beat_time: newB, sample_time: tB });
+      c.call("move_warp_marker", a.beat_time, newA - a.beat_time);
+    }
+  } catch (e) { post("SeqAnalyzer: straighten failed: " + e + "\n"); }
 }
 
 function failSong(msg) {

@@ -12,7 +12,7 @@ into Live's Arrangement and press **Analyze & Build**. The device then:
 5. Creates a **GUIDE CUES** audio track with spoken cues from your own cue pack: the section name
    two bars ahead, then "1 2 3 4" in the bar before the section.
 
-> Status: **v0.7.0, prototype.** Tested against a simulated Live API and real song analysis,
+> Status: **v0.7.1, prototype.** Tested against a simulated Live API and real song analysis,
 > but not yet run inside Live itself. See [Known limitations](#known-limitations).
 
 ## Requirements

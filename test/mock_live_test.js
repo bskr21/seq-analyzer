@@ -7,7 +7,7 @@ const node = require(path.join(ROOT, "device", "aicb_node.js"));
 let nextId = 1;
 const objs = {};
 function reg(o) { o.id = nextId++; objs[o.id] = o; return o; }
-const song = reg({ kind: "song", tempo: 113, record_mode: 0, session_automation_record: 0, loop: 0, current_song_time: 0,
+const song = reg({ kind: "song", _tempo: 113, tempo: 113, record_mode: 0, session_automation_record: 0, loop: 0, current_song_time: 0,
   is_playing: 0, tracks: [], tempoLog: [] });
 function mkTrack(name, audio) { return reg({ kind: "track", name, has_audio_input: audio ? 1 : 0, can_be_armed: 1, arm: 0, clips: [] }); }
 const songTrack = mkTrack("SEQ", true);
@@ -19,18 +19,21 @@ const SR = 44100, DUR = 208.192;
 function mkSong(file, start, dur) {
   const c = reg({ kind: "clip", audio: 1, name: file.replace(/^.*\//, "").replace(/\.wav$/, ""), file_path: file,
     start_time: start, start_marker: 0, sample_rate: SR, sample_length: Math.round(dur * SR), loop_start: 0, loop_end: dur, dur,
-    _warping: 1, markers: [{ sample_time: 0, beat_time: 0 }, { sample_time: dur, beat_time: dur * 147 / 60 }] });
+    _warping: 1, markers: [{ sample_time: 0, beat_time: 0 }, { sample_time: dur, beat_time: dur * 147 / 60 },
+                            { sample_time: dur + 0.5, beat_time: dur * 147 / 60 + 1, hidden: true }] });
   Object.defineProperty(c, "warping", {
     get() { return this._warping; },
     set(v) {
       if (v && !this._warping) {
         this._old = this.markers;
+        // Live keeps timing at the tempo it currently has (song._tempo lags behind sets, see below)
         this.markers = process.env.FAKE_NO ? this._old
-          : [{ sample_time: 0, beat_time: 0 }, { sample_time: this.dur, beat_time: this.dur * song.tempo / 60 }];
+          : [{ sample_time: 0, beat_time: 0 }, { sample_time: this.dur, beat_time: this.dur * song._tempo / 60 },
+             { sample_time: this.dur + 0.5, beat_time: this.dur * song._tempo / 60 + 1, hidden: true }];
       }
       this._warping = v ? 1 : 0;
     } });
-  c.end_time_fn = x => x._warping ? x.start_time + beatAtM(x.markers, x.dur) - x.start_marker : x.start_time + x.dur * song.tempo / 60;
+  c.end_time_fn = x => x._warping ? x.start_time + beatAtM(x.markers, x.dur) - x.start_marker : x.start_time + x.dur * song._tempo / 60;
   songTrack.clips.push(c);
   return c;
 }
@@ -63,6 +66,7 @@ class LiveAPI {
       case "arrangement_clips": return ids(o.clips);
       case "tracks": return ids(o.tracks);
       case "end_time": return [o.end_time_fn ? o.end_time_fn(o) : o.end_time];
+      case "tempo": return [o === song ? song._tempo : o.tempo];
       case "is_audio_clip": return [o.audio ? 1 : 0];
       case "warp_markers": return [JSON.stringify({ warp_markers: o.markers })];
       case "file_path": return [o.file_path !== undefined ? o.file_path : (process.env.SET_PATH || "")];
@@ -70,7 +74,7 @@ class LiveAPI {
     }
   }
   set(prop, v) {
-    if (prop === "tempo") { this.o.tempo = v; if (song.record_mode && song.is_playing && song.session_automation_record) song.tempoLog.push(["value", song.current_song_time, v]); return; }
+    if (prop === "tempo") { setTimeout(() => { song._tempo = v; }, 120); this.o.tempo = v; if (song.record_mode && song.is_playing && song.session_automation_record) song.tempoLog.push(["value", song.current_song_time, v]); return; }
     if (prop === "record_mode" && this.o === song && song.is_playing) song.tempoLog.push([v ? "punch-in" : "punch-out", song.current_song_time]);
     if (prop === "is_playing") { song.is_playing = v; return; }
     this.o[prop] = v;
@@ -84,7 +88,7 @@ class LiveAPI {
       case "create_audio_clip": {
         const f = a[0]; if (!fs.existsSync(f)) throw new Error("missing " + f);
         o.clips.push(reg({ kind: "clip", audio: 1, file: f, start_time: a[1], warping: 1, loop_end: 1, name: "", color: 0,
-          end_time_fn: c => c.start_time + (c.warping ? c.loop_end : c.loop_end * song.tempo / 60) })); return;
+          end_time_fn: c => c.start_time + (c.warping ? c.loop_end : c.loop_end * song._tempo / 60) })); return;
       }
       case "delete_clip": o.clips = o.clips.filter(c => c.id !== a[1]); return;
       case "add_warp_marker": {
@@ -94,8 +98,8 @@ class LiveAPI {
         for (let i = 1; i < o.markers.length; i++) if (o.markers[i].sample_time <= o.markers[i - 1].sample_time) throw new Error("marker order");
         return;
       }
-      case "remove_warp_marker": o.markers = o.markers.filter(m => Math.abs(m.beat_time - a[0]) > 1e-9); return;
-      case "move_warp_marker": { const m = o.markers.find(m => Math.abs(m.beat_time - a[0]) < 1e-9); if (!m) throw new Error("no marker at " + a[0]); m.beat_time += a[1]; return; }
+      case "remove_warp_marker": o.markers = o.markers.filter(m => m.hidden || Math.abs(m.beat_time - a[0]) > 1e-9); return;
+      case "move_warp_marker": { const m = o.markers.find(m => Math.abs(m.beat_time - a[0]) < 1e-9); if (!m) throw new Error("no marker at " + a[0]); if (!m.hidden) m.beat_time += a[1]; return; }
       case "start_playing": song.is_playing = 1; song.current_song_time = 30; return;   // insert marker somewhere else
       case "stop_playing": song.is_playing = 0; return;
       default: throw new Error("call " + fn);
@@ -137,7 +141,7 @@ setTimeout(() => {
   console.log("\nSECTIONS:"); sec.clips.forEach(c => console.log("  %s %d-%d", c.name.padEnd(13), c.start_time, c.end_time));
   console.log("\nCUES (first 12):"); cue.clips.slice(0, 12).forEach(c => console.log("  %s @%d warp=%d len=%ss %s", c.name.padEnd(13), c.start_time, c.warping, c.loop_end.toFixed(3), path.basename(c.file)));
   console.log("  ... total", cue.clips.length);
-  const bpmOf = c => (60 * (c.markers[c.markers.length - 1].beat_time - c.markers[0].beat_time) / (c.markers[c.markers.length - 1].sample_time - c.markers[0].sample_time)).toFixed(3);
+  const bpmOf = c => { const v = c.markers.filter(m => !m.hidden); return (60 * (v[v.length - 1].beat_time - v[0].beat_time) / (v[v.length - 1].sample_time - v[0].sample_time)).toFixed(3); };
   console.log("\nSONG CLIPS: warping", songClip.warping, song2.warping, "| warp BPM", bpmOf(songClip), bpmOf(song2),
     "| end beats", songClip.end_time_fn(songClip).toFixed(2), song2.end_time_fn(song2).toFixed(2));
   // re-run to check track reuse
@@ -155,17 +159,19 @@ async function sweep() {
   song.is_playing = 1;
   const changes = [];
   for (let pos = 0; pos <= 800; pos += 0.125) {          // ~one notification per 50 ms at 150 BPM
-    const before = song.tempo;
+    const before = song._tempo;
     song.current_song_time = pos;
     observers.filter(o => o.name === "current_song_time").forEach(o => o.api.cb(["current_song_time", pos]));
     await new Promise(r => setTimeout(r, 0));
-    if (song.tempo !== before) changes.push([pos, before, song.tempo]);
-    if (pos === 300) song.tempo = 120;                     // someone changes the tempo mid-song (kept)
+    await new Promise(r => setTimeout(r, 0));
+    if (song._tempo !== before) changes.push([pos, before, song._tempo]);
+    if (pos === 300) { song.tempo = 120; song._tempo = 120; }                     // someone changes the tempo mid-song (kept)
     if (pos === 650) { song.current_song_time = 100; observers.forEach(o => o.api.cb(["current_song_time", 100]));
-                       await new Promise(r => setTimeout(r, 0)); changes.push(["jump back to 100 ->", song.tempo]); }
+                       await new Promise(r => setTimeout(r, 0)); await new Promise(r => setTimeout(r, 150)); changes.push(["jump back to 100 ->", song._tempo]); }
   }
   console.log("\nFOLLOW: tempo changes during playback [beat, from, to]:", JSON.stringify(changes));
-  ctx.followon(0); song.tempo = 99; ctx.checkPos(200); ctx.checkPos(700);
+  ctx.followon(0); song.tempo = 99; song._tempo = 99; ctx.checkPos(200); ctx.checkPos(700);
   await new Promise(r => setTimeout(r, 5));
-  console.log("FOLLOW off -> tempo untouched:", song.tempo === 99);
+  await new Promise(r => setTimeout(r, 200));
+  console.log("FOLLOW off -> tempo untouched:", song._tempo === 99);
 }
