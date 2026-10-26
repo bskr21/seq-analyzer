@@ -82,6 +82,7 @@ function analyze() {
   review = null;
   reviewPage = 0;
   resultsExpanded = false;
+  outlet(4, "table", "clear", "all");
   refreshPanels();
   showReviewPage();
   var tr = api("this_device canonical_parent");
@@ -148,26 +149,23 @@ function cueinfo() {
     selected ? 0.08 : 0.85, selected ? 0.08 : 0.85, 1.0);
 }
 function showReviewPage() {
-  var data = review || [], pages = Math.max(1, Math.ceil(data.length / REVIEW_PAGE_SIZE));
-  reviewPage = Math.max(0, Math.min(reviewPage, pages - 1));
-  for (var j = 0; j < REVIEW_PAGE_SIZE; j++) {
-    var idx = reviewPage * REVIEW_PAGE_SIZE + j;
-    var r = data[idx];
-    if (!r) { outlet(4, "row", j, "set", ""); continue; }
-    var loc = arrangementPosition(r.start);
-    var name = String(r.clip || r.name || "?");
-    if (name.length > 19) name = name.substring(0, 16) + "...";
-    var seconds = Math.floor(r.duration % 60);
-    var duration = Math.floor(r.duration / 60) + ":" + (seconds < 10 ? "0" : "") + seconds;
-    var row = r.error ? (idx + 1) + ". " + name + " | ERROR" :
-      (idx + 1) + ". " + name + " | " + r.bpm.toFixed(1) +
-      " BPM | " + duration + " | Bar " + loc + " | Warp " + (r.warp ? "ON" : "OFF");
-    outlet(4, "row", j, "set", row);
+  var data = review || [];
+  outlet(4, "table", "clear", "all");
+  for (var j=0; j<data.length && j<MAX_SONGS; j++) {
+    var r=data[j];
+    if (r.error) {
+      outlet(4, "table", "set", 0, j, String(j+1)+". "+String(r.clip||"Unknown"));
+      outlet(4, "table", "set", 1, j, "ERROR");
+      continue;
+    }
+    var sec=Math.floor(r.duration%60);
+    var duration=Math.floor(r.duration/60)+":"+(sec<10?"0":"")+sec;
+    var title=String(j+1)+". "+String(r.clip||"Untitled");
+    var details=r.bpm.toFixed(1)+" BPM | "+duration+" | Bar "+arrangementPosition(r.start)+" | Warp "+(r.warp?"ON":"OFF");
+    outlet(4, "table", "set", 0, j, title);
+    outlet(4, "table", "set", 1, j, details);
   }
-  outlet(4, "count", "set", "Analyzed " + data.length + " songs");
-  outlet(4, "page", "set", "Songs " + (data.length ? reviewPage * REVIEW_PAGE_SIZE + 1 : 0) +
-    "-" + Math.min(data.length, (reviewPage + 1) * REVIEW_PAGE_SIZE) +
-    " of " + data.length + "  |  Page " + (reviewPage + 1) + "/" + pages);
+  outlet(4, "count", "set", "Analyzed: "+data.length+" songs");
 }
 function arrangementPosition(start) {
   var sig = 4;
