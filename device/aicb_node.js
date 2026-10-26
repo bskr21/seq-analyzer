@@ -206,7 +206,7 @@ function cacheFile(file, hint) {
     require("crypto").createHash("sha1").update(key).digest("hex") + ".json");
 }
 
-async function run(file, clipName) {
+async function run(file, clipName, inspectOnly = false) {
   if (busy) return status("Already working...");
   busy = true;
   try {
@@ -222,9 +222,14 @@ async function run(file, clipName) {
       fs.mkdirSync(path.dirname(cached), { recursive: true });
       fs.writeFileSync(cached, JSON.stringify(res));
     }
-    const plan = makePlan(res, loadConfig());
-    if (maxAPI) await maxAPI.outlet("plan", JSON.stringify(plan));
-    else console.log(JSON.stringify(plan, null, 1));
+    if (inspectOnly) {
+      if (maxAPI) await maxAPI.outlet("analysis", JSON.stringify(res));
+      else console.log(JSON.stringify(res, null, 1));
+    } else {
+      const plan = makePlan(res, loadConfig());
+      if (maxAPI) await maxAPI.outlet("plan", JSON.stringify(plan));
+      else console.log(JSON.stringify(plan, null, 1));
+    }
   } catch (e) {
     status("Error: " + e.message);
     if (maxAPI) maxAPI.outlet("failed");
@@ -238,6 +243,12 @@ if (maxAPI) {
     let o = null;
     try { o = JSON.parse(txt); } catch (e) {}
     if (o && o.file) run(o.file, o.clip || ""); else run(txt, "");
+  });
+  maxAPI.addHandler("inspect", (...parts) => {
+    const txt = parts.join(" ");
+    let o = null;
+    try { o = JSON.parse(txt); } catch (e) {}
+    if (o && o.file) run(o.file, o.clip || "", true); else run(txt, "", true);
   });
   maxAPI.addHandler("setcuedir", (...parts) => {
     const cfg = loadConfig();
