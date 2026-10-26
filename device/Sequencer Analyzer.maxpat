@@ -30,7 +30,7 @@
   "enablehscroll": 1,
   "enablevscroll": 1,
   "devicewidth": 396,
-  "description": "v0.8.0-alpha.5 tabbed Setup Analyze Build with expandable results",
+  "description": "v0.8.0-alpha.5 tabbed Setup Analyze Build and scrollable song results",
   "digest": "",
   "tags": "",
   "style": "",
@@ -3411,11 +3411,11 @@
       380,
       20
      ],
-     "text": "SONG | BPM | DURATION | START BAR | WARP",
+     "text": "SONG TITLE                       BPM / LENGTH / BAR / WARP",
      "presentation": 1,
      "presentation_rect": [
       8,
-      203,
+      205,
       378,
       20
      ],
@@ -3467,7 +3467,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       230,
@@ -3492,7 +3492,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       253,
@@ -3517,7 +3517,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       276,
@@ -3542,7 +3542,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       299,
@@ -3567,7 +3567,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       322,
@@ -3592,7 +3592,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       345,
@@ -3617,7 +3617,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       368,
@@ -3642,7 +3642,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       391,
@@ -3667,7 +3667,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       414,
@@ -3692,7 +3692,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       437,
@@ -3717,7 +3717,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       460,
@@ -3742,7 +3742,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       483,
@@ -3767,7 +3767,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       506,
@@ -3792,7 +3792,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       529,
@@ -3817,7 +3817,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       552,
@@ -3842,7 +3842,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       575,
@@ -4180,7 +4180,7 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      180,
+      457,
       378,
       20
      ],
@@ -4271,6 +4271,70 @@
       1070,
       1190,
       180,
+      22
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-songtable",
+     "maxclass": "jit.cellblock",
+     "numinlets": 2,
+     "numoutlets": 3,
+     "patching_rect": [
+      1070,
+      1300,
+      378,
+      230
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      226,
+      378,
+      224
+     ],
+     "varname": "obj-songtable",
+     "hidden": 1,
+     "rows": 16,
+     "cols": 2,
+     "colwidth": 235,
+     "rowheight": 24,
+     "readonly": 1,
+     "neverdirty": 1,
+     "bgcolor": [
+      0.16,
+      0.16,
+      0.16,
+      1
+     ],
+     "textcolor": [
+      0.87,
+      0.87,
+      0.87,
+      1
+     ],
+     "gridlinecolor": [
+      0.27,
+      0.27,
+      0.27,
+      1
+     ],
+     "vscroll": 1,
+     "hscroll": 1
+    }
+   },
+   {
+    "box": {
+     "id": "obj-tableroute",
+     "maxclass": "newobj",
+     "text": "route table",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      1050,
+      1550,
+      90,
       22
      ]
     }
@@ -6865,6 +6929,30 @@
      ],
      "destination": [
       "obj-resultcount",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-rowroute",
+      1
+     ],
+     "destination": [
+      "obj-tableroute",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-tableroute",
+      0
+     ],
+     "destination": [
+      "obj-songtable",
       0
      ]
     }
