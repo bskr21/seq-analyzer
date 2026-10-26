@@ -3,7 +3,7 @@
 // 3 -> stored parameters: "slot <i> <start> <end> <bpm>" (tempo range of each song, saved with the Live Set).
 autowatch = 1;
 inlets = 1;
-outlets = 5;
+outlets = 6;
 
 var SECTIONS_NAME = "SECTIONS";
 var CUES_NAME = "GUIDE CUES";
@@ -70,9 +70,13 @@ function baseName(p) { return String(p).replace(/^.*[\/\\]/, ""); }
 // ------------------------------------------------------------------ entry points
 // v0.8.0-alpha: read-only analysis results, kept until the next scan.
 var review = null;
+var reviewPage = 0;
+var REVIEW_PAGE_SIZE = 3;
 function analyze() {
   if (state && state.busy) { say("Analysis is running."); return; }
   review = null;
+  reviewPage = 0;
+  showReviewPage();
   var tr = api("this_device canonical_parent");
   if (trackIndex(tr) < 0 || num(tr, "has_audio_input") !== 1) { fail("put the device on an audio track"); return; }
   var ids = idList(tr, "arrangement_clips"), songs = [];
@@ -89,7 +93,6 @@ function analyze() {
   if (songs.length > MAX_SONGS) { fail("only up to 16 songs are supported"); return; }
   state = { busy: true, mode: "review", track: tr, songs: songs, idx: -1, results: [], doneSecs: [] };
   bar(0);
-  for (var line = 0; line < MAX_SONGS; line++) outlet(4, "row", line, "set", "");
   nextSong();
 }
 function analysis() {
@@ -107,32 +110,61 @@ function analysis() {
 function buildreview() {
   say("BUILD is not enabled in v0.8.0-alpha. ANALYZE is read-only; Warp and clips are unchanged.");
 }
-function finishReview() {
-  review = state.results.slice();
-  var ok = review.filter(function(r){ return !r.error; });
+// The device display has room for three rows. Keep all results and page through them.
+function reviewprev() {
+  if (reviewPage > 0) reviewPage--;
+  showReviewPage();
+}
+function reviewnext() {
+  if (review && (reviewPage + 1) * REVIEW_PAGE_SIZE < review.length) reviewPage++;
+  showReviewPage();
+}
+function cueinfo() {
+  var value = arrayfromargs(arguments).join(" ");
+  outlet(5, "set", value || "Cue Folder: NOT SELECTED");
+}
+function showReviewPage() {
+  var data = review || [], pages = Math.max(1, Math.ceil(data.length / REVIEW_PAGE_SIZE));
+  reviewPage = Math.max(0, Math.min(reviewPage, pages - 1));
+  for (var j = 0; j < REVIEW_PAGE_SIZE; j++) {
+    var idx = reviewPage * REVIEW_PAGE_SIZE + j;
+    var r = data[idx];
+    if (!r) { outlet(4, "row", j, "set", ""); continue; }
+    var loc = arrangementPosition(r.start);
+    var name = String(r.clip || r.name || "?");
+    if (name.length > 19) name = name.substring(0, 16) + "...";
+    var seconds = Math.floor(r.duration % 60);
+    var duration = Math.floor(r.duration / 60) + ":" + (seconds < 10 ? "0" : "") + seconds;
+    var row = r.error ? (idx + 1) + ". " + name + " | ERROR" :
+      (idx + 1) + ". " + name + " | " + r.bpm.toFixed(1) +
+      " BPM | " + duration + " | Bar " + loc + " | Warp " + (r.warp ? "ON" : "OFF");
+    outlet(4, "row", j, "set", row);
+  }
+  outlet(4, "page", "set", "Songs " + (data.length ? reviewPage * REVIEW_PAGE_SIZE + 1 : 0) +
+    "-" + Math.min(data.length, (reviewPage + 1) * REVIEW_PAGE_SIZE) +
+    " of " + data.length + "  |  Page " + (reviewPage + 1) + "/" + pages);
+}
+function arrangementPosition(start) {
   var sig = 4;
   try { sig = Math.max(1, num(api("live_set"), "signature_numerator")); } catch (e) {}
-  // A global signature is sufficient for uniform-meter sets. Positions with time-signature
-  // automation need a dedicated meter-map resolver in a later version.
+  var pos = Number(start) || 0;
+  var barNo = Math.floor(pos / sig) + 1;
+  var beatNo = Math.floor(pos % sig) + 1;
+  return barNo + "." + beatNo + "." + (Math.round((pos - Math.floor(pos)) * 960) + 1);
+}
+function finishReview() {
+  review = state.results.slice();
+  reviewPage = 0;
+  var ok = review.filter(function(r){ return !r.error; });
   for (var i = 0; i < review.length; i++) {
     var r = review[i];
-    var pos = Number(r.start) || 0, b = Math.floor(pos / sig) + 1;
-    var beat = Math.floor(pos % sig) + 1;
-    var ticks = Math.round((pos - Math.floor(pos)) * 960);
-    var loc = b + "." + beat + "." + (ticks + 1);
-    var displayName = String(r.clip || r.name || "?");
-    if (displayName.length > 22) displayName = displayName.substring(0, 19) + "...";
-    var row = r.error ? (i+1) + ". " + displayName + " | ERROR" :
-      (i+1) + ". " + displayName + " | " + r.bpm.toFixed(1) +
-      " BPM | " + Math.floor(r.duration / 60) + ":" + ("0"+Math.floor(r.duration%60)).slice(-2) +
-      " | Bar " + loc + " | Warp " + (r.warp ? "ON" : "OFF");
-    outlet(4, "row", i, "set", row);
-    post("SeqAnalyzer review " + (i+1) + ": " + r.clip + " | " +
+    post("SeqAnalyzer review " + (i+1) + ": " + (r.clip || r.name) + " | " +
       (r.error || (r.bpm.toFixed(2) + " BPM | " + r.duration.toFixed(1) +
-      " sec | start " + (Math.floor(r.start / Math.max(1, r.meter)) + 1) + ".1.1 (beat " + r.start.toFixed(2) + ")" + " | Warp " + (r.warp ? "ON" : "OFF"))) + "\n");
+      " sec | start beat " + r.start.toFixed(2) +
+      " | Warp " + (r.warp ? "ON" : "OFF"))) + "\\n");
   }
-  say("ANALYZE: " + ok.length + "/" + review.length +
-    " songs. Results below. BUILD is disabled (alpha).");
+  showReviewPage();
+  say("ANALYZE: " + ok.length + "/" + review.length + " songs. Use Previous/Next to see all. BUILD disabled.");
   bar(100);
   state.busy = false;
 }
