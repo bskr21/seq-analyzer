@@ -12,8 +12,8 @@
   "rect": [
    100,
    100,
-   760,
-   480
+   790,
+   700
   ],
   "openinpresentation": 1,
   "default_fontsize": 10,
@@ -30,7 +30,7 @@
   "enablehscroll": 1,
   "enablevscroll": 1,
   "devicewidth": 396,
-  "description": "v0.8.0-alpha.4: paged 2-row Analyze UI, selectable cue button label, guarded status messages.",
+  "description": "v0.8.0-alpha.5 tabbed Setup Analyze Build with expandable results",
   "digest": "",
   "tags": "",
   "style": "",
@@ -82,7 +82,7 @@
       200,
       20
      ],
-     "text": "SEQUENCER ANALYZER | alpha.4",
+     "text": "SEQUENCER ANALYZER | alpha.5",
      "presentation": 1,
      "presentation_rect": [
       8,
@@ -114,13 +114,13 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      26,
-      128,
-      20
+      170,
+      378,
+      30
      ],
      "mode": 0,
      "texton": "Choose Cue Folder",
-     "varname": "CueFolder",
+     "varname": "obj-cuebtn",
      "parameter_enable": 1,
      "saved_attribute_attributes": {
       "valueof": {
@@ -134,7 +134,8 @@
        ],
        "parameter_invisible": 1
       }
-     }
+     },
+     "hidden": 1
     }
    },
    {
@@ -156,14 +157,14 @@
      "text": "ANALYZE",
      "presentation": 1,
      "presentation_rect": [
-      142,
-      26,
-      128,
-      20
+      8,
+      80,
+      378,
+      29
      ],
      "mode": 0,
      "texton": "ANALYZE",
-     "varname": "Analyze",
+     "varname": "obj-buildbtn",
      "parameter_enable": 1,
      "saved_attribute_attributes": {
       "valueof": {
@@ -177,7 +178,8 @@
        ],
        "parameter_invisible": 1
       }
-     }
+     },
+     "hidden": 0
     }
    },
    {
@@ -199,14 +201,14 @@
      "text": "BUILD (beta)",
      "presentation": 1,
      "presentation_rect": [
-      276,
-      26,
-      110,
-      20
+      8,
+      80,
+      378,
+      29
      ],
      "mode": 0,
      "texton": "BUILD (beta)",
-     "varname": "BuildBeta",
+     "varname": "obj-tempobtn",
      "parameter_enable": 1,
      "activebgoncolor": [
       1,
@@ -232,7 +234,8 @@
        ],
        "parameter_invisible": 1
       }
-     }
+     },
+     "hidden": 1
     }
    },
    {
@@ -3359,13 +3362,15 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      54,
+      119,
       378,
-      8
+      9
      ],
      "filename": "aicb_progress.js",
      "parameter_enable": 0,
-     "ignoreclick": 1
+     "ignoreclick": 1,
+     "varname": "obj-progress",
+     "hidden": 0
     }
    },
    {
@@ -3384,12 +3389,14 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      65,
+      135,
       378,
-      19
+      32
      ],
      "linecount": 1,
-     "fontsize": 10.5
+     "fontsize": 10.5,
+     "varname": "obj-status",
+     "hidden": 0
     }
    },
    {
@@ -3408,12 +3415,14 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      91,
+      203,
       378,
-      18
+      20
      ],
      "fontface": 1,
-     "fontsize": 10
+     "fontsize": 10,
+     "varname": "obj-resultheading",
+     "hidden": 0
     }
    },
    {
@@ -3461,12 +3470,14 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      139,
+      230,
       378,
       21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review0",
+     "hidden": 1
     }
    },
    {
@@ -3484,12 +3495,14 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      163,
+      253,
       378,
       21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review1",
+     "hidden": 1
     }
    },
    {
@@ -3504,15 +3517,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      181,
+      276,
       378,
       21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review2",
+     "hidden": 1
     }
    },
    {
@@ -3527,15 +3542,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      174,
+      299,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review3",
+     "hidden": 1
     }
    },
    {
@@ -3550,15 +3567,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      196,
+      322,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review4",
+     "hidden": 1
     }
    },
    {
@@ -3573,15 +3592,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      218,
+      345,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review5",
+     "hidden": 1
     }
    },
    {
@@ -3596,15 +3617,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      240,
+      368,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review6",
+     "hidden": 1
     }
    },
    {
@@ -3619,15 +3642,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      262,
+      391,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review7",
+     "hidden": 1
     }
    },
    {
@@ -3642,15 +3667,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      284,
+      414,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review8",
+     "hidden": 1
     }
    },
    {
@@ -3665,15 +3692,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      306,
+      437,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review9",
+     "hidden": 1
     }
    },
    {
@@ -3688,15 +3717,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      328,
+      460,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review10",
+     "hidden": 1
     }
    },
    {
@@ -3711,15 +3742,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      350,
+      483,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review11",
+     "hidden": 1
     }
    },
    {
@@ -3734,15 +3767,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      372,
+      506,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review12",
+     "hidden": 1
     }
    },
    {
@@ -3757,15 +3792,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      394,
+      529,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review13",
+     "hidden": 1
     }
    },
    {
@@ -3780,15 +3817,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      416,
+      552,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review14",
+     "hidden": 1
     }
    },
    {
@@ -3803,15 +3842,17 @@
       380,
       22
      ],
-     "presentation": 0,
+     "presentation": 1,
      "presentation_rect": [
       8,
-      438,
+      575,
       378,
-      20
+      21
      ],
      "text": "",
-     "fontsize": 9.5
+     "fontsize": 10,
+     "varname": "obj-review15",
+     "hidden": 1
     }
    },
    {
@@ -3829,13 +3870,15 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      195,
+      300,
       378,
-      24
+      32
      ],
      "text": "Enable Lead manually after BUILD (beta).",
      "fontsize": 10,
-     "linecount": 2
+     "linecount": 2,
+     "varname": "obj-leadnotice",
+     "hidden": 1
     }
    },
    {
@@ -3892,7 +3935,7 @@
       186,
       21
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       95,
       111,
@@ -3915,7 +3958,7 @@
       84,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       111,
@@ -3954,7 +3997,7 @@
       84,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       296,
       111,
@@ -3997,6 +4040,238 @@
      "outlettype": [
       "",
       ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-ui-tabs",
+     "maxclass": "live.tab",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "",
+      ""
+     ],
+     "patching_rect": [
+      1050,
+      900,
+      380,
+      30
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      31,
+      378,
+      31
+     ],
+     "parameter_enable": 0,
+     "appearance": 1,
+     "saved_attribute_attributes": {
+      "valueof": {
+       "parameter_type": 2,
+       "parameter_enum": [
+        "SETUP",
+        "ANALYZE",
+        "BUILD"
+       ],
+       "parameter_initial": [
+        1
+       ],
+       "parameter_initial_enable": 1
+      }
+     }
+    }
+   },
+   {
+    "box": {
+     "id": "obj-tab-prepend",
+     "maxclass": "newobj",
+     "text": "prepend uitab",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "patching_rect": [
+      1050,
+      940,
+      110,
+      22
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-ui-init",
+     "maxclass": "message",
+     "text": "uitab 1",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "patching_rect": [
+      1180,
+      940,
+      80,
+      22
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-setupheading",
+     "maxclass": "comment",
+     "text": "GUIDE CUES FOLDER",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1070,
+      1120,
+      380,
+      40
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      82,
+      378,
+      22
+     ],
+     "fontsize": 13,
+     "varname": "obj-setupheading",
+     "hidden": 1
+    }
+   },
+   {
+    "box": {
+     "id": "obj-setupdescription",
+     "maxclass": "comment",
+     "text": "Choose the folder containing guide cues. Selected folder appears in orange.",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1070,
+      1040,
+      380,
+      40
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      124,
+      378,
+      39
+     ],
+     "fontsize": 11,
+     "varname": "obj-setupdescription",
+     "hidden": 1
+    }
+   },
+   {
+    "box": {
+     "id": "obj-resultcount",
+     "maxclass": "comment",
+     "text": "No songs analyzed yet",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1070,
+      1000,
+      380,
+      40
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      180,
+      378,
+      20
+     ],
+     "fontsize": 10,
+     "varname": "obj-resultcount",
+     "hidden": 0
+    }
+   },
+   {
+    "box": {
+     "id": "obj-builddescription",
+     "maxclass": "comment",
+     "text": "BUILD is disabled in alpha. Later it will update Warp BPM, then create SECTION MIDI clips and GUIDE CUES.",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1070,
+      1040,
+      380,
+      40
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      185,
+      378,
+      88
+     ],
+     "fontsize": 11,
+     "varname": "obj-builddescription",
+     "hidden": 1
+    }
+   },
+   {
+    "box": {
+     "id": "obj-detailtoggle",
+     "maxclass": "live.text",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "text": "Show Song List",
+     "texton": "Show Song List",
+     "mode": 0,
+     "parameter_enable": 0,
+     "patching_rect": [
+      1070,
+      1140,
+      200,
+      30
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      174,
+      378,
+      24
+     ],
+     "varname": "obj-detailtoggle"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-togglemsg",
+     "maxclass": "message",
+     "text": "resultstoggle",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "patching_rect": [
+      1280,
+      1140,
+      110,
+      22
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-exproute",
+     "maxclass": "newobj",
+     "text": "route expandlabel count",
+     "numinlets": 2,
+     "numoutlets": 3,
+     "outlettype": [
+      "",
+      "",
+      ""
+     ],
+     "patching_rect": [
+      1070,
+      1190,
+      180,
+      22
      ]
     }
    }
@@ -6482,6 +6757,114 @@
      ],
      "destination": [
       "obj-cuebtn",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-ui-tabs",
+      0
+     ],
+     "destination": [
+      "obj-tab-prepend",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-tab-prepend",
+      0
+     ],
+     "destination": [
+      "obj-js",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-init",
+      0
+     ],
+     "destination": [
+      "obj-ui-init",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-ui-init",
+      0
+     ],
+     "destination": [
+      "obj-js",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-detailtoggle",
+      0
+     ],
+     "destination": [
+      "obj-togglemsg",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-togglemsg",
+      0
+     ],
+     "destination": [
+      "obj-js",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-rowroute",
+      1
+     ],
+     "destination": [
+      "obj-exproute",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-exproute",
+      0
+     ],
+     "destination": [
+      "obj-detailtoggle",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-exproute",
+      1
+     ],
+     "destination": [
+      "obj-resultcount",
       0
      ]
     }
