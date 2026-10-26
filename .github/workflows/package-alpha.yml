@@ -1,0 +1,26 @@
+name: Package Sequencer Analyzer alpha
+on:
+  push:
+    branches:
+      - feature/separate-analyze-build
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build AMXD from Max patch
+        run: python3 scripts/package_alpha.py
+      - name: Assemble alpha test kit
+        run: |
+          mkdir -p dist/alpha-kit
+          cp 'dist/Sequencer Analyzer v0.8.0-alpha.amxd' dist/alpha-kit/
+          cp device/aicb_live.js device/aicb_node.js device/aicb_progress.js dist/alpha-kit/
+          cp docs/v0.8-alpha.md dist/alpha-kit/README.md
+      - name: Upload alpha kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: seq-analyzer-v0.8.0-alpha
+          path: dist/alpha-kit/
