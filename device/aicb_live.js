@@ -113,7 +113,7 @@ function finishReview() {
     var r = review[i];
     post("SeqAnalyzer review " + (i+1) + ": " + r.clip + " | " +
       (r.error || (r.bpm.toFixed(2) + " BPM | " + r.duration.toFixed(1) +
-      " sec | start beat " + r.start.toFixed(2) + " | Warp " + (r.warp ? "ON" : "OFF"))) + "\n");
+      " sec | start " + (Math.floor(r.start / Math.max(1, r.meter)) + 1) + ".1.1 (beat " + r.start.toFixed(2) + ")" + " | Warp " + (r.warp ? "ON" : "OFF"))) + "\n");
   }
   say("ANALYZE: " + ok.length + "/" + review.length + " songs. " +
     ok.map(function(r){return r.clip + " " + r.bpm.toFixed(1) + " BPM, Warp " + (r.warp ? "ON" : "OFF");}).join(" | ") +
