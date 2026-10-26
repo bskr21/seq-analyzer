@@ -3267,7 +3267,7 @@
      "id": "obj-js",
      "maxclass": "newobj",
      "numinlets": 1,
-     "numoutlets": 4,
+     "numoutlets": 5,
      "patching_rect": [
       300,
       280,
@@ -3275,6 +3275,7 @@
       22
      ],
      "outlettype": [
+      "",
       "",
       "",
       "",
@@ -3378,16 +3379,462 @@
       380,
       40
      ],
-     "text": "Click ANALYZE to scan songs. BUILD will be enabled in beta.",
+     "text": "Click ANALYZE to scan. Song details appear below.",
      "presentation": 1,
      "presentation_rect": [
       8,
       64,
       378,
-      46
+      22
      ],
-     "linecount": 3,
+     "linecount": 1,
      "fontsize": 10.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-resultheading",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      20,
+      380,
+      20
+     ],
+     "text": "ANALYSIS RESULTS — Title | BPM | Duration | Bar | Warp",
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      89,
+      380,
+      18
+     ],
+     "fontface": 1,
+     "fontsize": 10
+    }
+   },
+   {
+    "box": {
+     "id": "obj-rowroute",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      1010,
+      75,
+      90,
+      22
+     ],
+     "text": "route row"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-indexroute",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 17,
+     "patching_rect": [
+      1010,
+      110,
+      450,
+      22
+     ],
+     "text": "route 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review0",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      150,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      108,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review1",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      173,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      130,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review2",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      196,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      152,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review3",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      219,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      174,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review4",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      242,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      196,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review5",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      265,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      218,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review6",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      288,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      240,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review7",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      311,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      262,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review8",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      334,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      284,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review9",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      357,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      306,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review10",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      380,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      328,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review11",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      403,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      350,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review12",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      426,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      372,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review13",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      449,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      394,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review14",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      472,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      416,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-review15",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      495,
+      380,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      438,
+      378,
+      20
+     ],
+     "text": "",
+     "fontsize": 9.5
+    }
+   },
+   {
+    "box": {
+     "id": "obj-leadnotice",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1010,
+      550,
+      380,
+      42
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      468,
+      378,
+      35
+     ],
+     "text": "Reminder: Enable LEAD manually after BUILD (not available in alpha).",
+     "fontsize": 10,
+     "linecount": 2
     }
    }
   ],
@@ -5548,6 +5995,222 @@
      ],
      "destination": [
       "obj-status",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-js",
+      4
+     ],
+     "destination": [
+      "obj-rowroute",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-rowroute",
+      0
+     ],
+     "destination": [
+      "obj-indexroute",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      0
+     ],
+     "destination": [
+      "obj-review0",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      1
+     ],
+     "destination": [
+      "obj-review1",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      2
+     ],
+     "destination": [
+      "obj-review2",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      3
+     ],
+     "destination": [
+      "obj-review3",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      4
+     ],
+     "destination": [
+      "obj-review4",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      5
+     ],
+     "destination": [
+      "obj-review5",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      6
+     ],
+     "destination": [
+      "obj-review6",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      7
+     ],
+     "destination": [
+      "obj-review7",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      8
+     ],
+     "destination": [
+      "obj-review8",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      9
+     ],
+     "destination": [
+      "obj-review9",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      10
+     ],
+     "destination": [
+      "obj-review10",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      11
+     ],
+     "destination": [
+      "obj-review11",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      12
+     ],
+     "destination": [
+      "obj-review12",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      13
+     ],
+     "destination": [
+      "obj-review13",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      14
+     ],
+     "destination": [
+      "obj-review14",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-indexroute",
+      15
+     ],
+     "destination": [
+      "obj-review15",
       0
      ]
     }
