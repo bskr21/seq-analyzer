@@ -255,6 +255,7 @@ if (maxAPI) {
     cfg.cueDir = maxToPosix(parts.join(" "));
     saveConfig(cfg);
     const n = Object.keys(buildCueIndex(cfg.cueDir)).length;
+    if (maxAPI) maxAPI.outlet("cueinfo", "Cue Folder: " + path.basename(cfg.cueDir) + " (" + n + " cues)");
     status("Cue folder set: " + path.basename(cfg.cueDir) + " (" + n + " cues)");
   });
   maxAPI.addHandler("option", (key, val) => {
@@ -265,7 +266,9 @@ if (maxAPI) {
   maxAPI.addHandler("hello", () => {
     const cfg = loadConfig();
     maxAPI.outlet("options", cfg.leadBars, cfg.counts ? 1 : 0, cfg.recordTempo ? 1 : 0);
-    status(cfg.cueDir ? "Ready. Cues: " + path.basename(cfg.cueDir) : "Ready. Choose your cue folder.");
+    const available = cfg.cueDir && fs.existsSync(cfg.cueDir);
+    if (maxAPI) maxAPI.outlet("cueinfo", available ? "Cue Folder: " + path.basename(cfg.cueDir) + " (selected)" : "Cue Folder: NOT SELECTED");
+    status(available ? "Ready. Cues: " + path.basename(cfg.cueDir) : "Ready. Choose your cue folder.");
   });
 }
 
