@@ -30,7 +30,7 @@
   "enablehscroll": 1,
   "enablevscroll": 1,
   "devicewidth": 396,
-  "description": "v0.8.0-alpha.5 tabbed Setup Analyze Build and scrollable song results",
+  "description": "alpha.6 recovery UI: permanently visible Cue Folder, Analyze, Build placeholder, scrollable song table.",
   "digest": "",
   "tags": "",
   "style": "",
@@ -82,7 +82,7 @@
       200,
       20
      ],
-     "text": "SEQUENCER ANALYZER | alpha.5",
+     "text": "SEQUENCER ANALYZER | alpha.6",
      "presentation": 1,
      "presentation_rect": [
       8,
@@ -114,9 +114,9 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      170,
-      378,
-      30
+      32,
+      118,
+      25
      ],
      "mode": 0,
      "texton": "Choose Cue Folder",
@@ -134,8 +134,7 @@
        ],
        "parameter_invisible": 1
       }
-     },
-     "hidden": 1
+     }
     }
    },
    {
@@ -157,10 +156,10 @@
      "text": "ANALYZE",
      "presentation": 1,
      "presentation_rect": [
-      8,
-      80,
-      378,
-      29
+      133,
+      32,
+      126,
+      25
      ],
      "mode": 0,
      "texton": "ANALYZE",
@@ -178,8 +177,7 @@
        ],
        "parameter_invisible": 1
       }
-     },
-     "hidden": 0
+     }
     }
    },
    {
@@ -201,10 +199,10 @@
      "text": "BUILD (beta)",
      "presentation": 1,
      "presentation_rect": [
-      8,
-      80,
-      378,
-      29
+      266,
+      32,
+      120,
+      25
      ],
      "mode": 0,
      "texton": "BUILD (beta)",
@@ -234,8 +232,7 @@
        ],
        "parameter_invisible": 1
       }
-     },
-     "hidden": 1
+     }
     }
    },
    {
@@ -3362,15 +3359,14 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      119,
+      65,
       378,
       9
      ],
      "filename": "aicb_progress.js",
      "parameter_enable": 0,
      "ignoreclick": 1,
-     "varname": "obj-progress",
-     "hidden": 0
+     "varname": "obj-progress"
     }
    },
    {
@@ -3389,14 +3385,13 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      135,
+      79,
       378,
-      32
+      35
      ],
-     "linecount": 1,
+     "linecount": 2,
      "fontsize": 10.5,
-     "varname": "obj-status",
-     "hidden": 0
+     "varname": "obj-status"
     }
    },
    {
@@ -3411,18 +3406,17 @@
       380,
       20
      ],
-     "text": "SONG TITLE                       BPM / LENGTH / BAR / WARP",
+     "text": "SONG TITLE  |  BPM / LENGTH / BAR / WARP",
      "presentation": 1,
      "presentation_rect": [
       8,
-      205,
+      125,
       378,
-      20
+      18
      ],
      "fontface": 1,
      "fontsize": 10,
-     "varname": "obj-resultheading",
-     "hidden": 0
+     "varname": "obj-resultheading"
     }
    },
    {
@@ -3870,15 +3864,14 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      300,
+      387,
       378,
-      32
+      22
      ],
-     "text": "Enable Lead manually after BUILD (beta).",
+     "text": "BUILD inactive. Enable LEAD manually after future BUILD.",
      "fontsize": 10,
      "linecount": 2,
-     "varname": "obj-leadnotice",
-     "hidden": 1
+     "varname": "obj-leadnotice"
     }
    },
    {
@@ -4059,7 +4052,7 @@
       380,
       30
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       31,
@@ -4127,7 +4120,7 @@
       380,
       40
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       82,
@@ -4152,7 +4145,7 @@
       380,
       40
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       124,
@@ -4180,13 +4173,12 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      457,
+      359,
       378,
-      20
+      21
      ],
      "fontsize": 10,
-     "varname": "obj-resultcount",
-     "hidden": 0
+     "varname": "obj-resultcount"
     }
    },
    {
@@ -4202,7 +4194,7 @@
       380,
       40
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       185,
@@ -4230,7 +4222,7 @@
       200,
       30
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       174,
@@ -4290,12 +4282,11 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      226,
+      147,
       378,
-      224
+      205
      ],
      "varname": "obj-songtable",
-     "hidden": 1,
      "rows": 16,
      "cols": 2,
      "colwidth": 235,
