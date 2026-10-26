@@ -30,7 +30,7 @@
   "enablehscroll": 1,
   "enablevscroll": 1,
   "devicewidth": 396,
-  "description": "v0.8.0-alpha.3: read-only Analyze; 3-row paginated results and persistent cue folder status.",
+  "description": "v0.8.0-alpha.4: paged 2-row Analyze UI, selectable cue button label, guarded status messages.",
   "digest": "",
   "tags": "",
   "style": "",
@@ -82,7 +82,7 @@
       200,
       20
      ],
-     "text": "SEQUENCER ANALYZER | alpha.3",
+     "text": "SEQUENCER ANALYZER | alpha.4",
      "presentation": 1,
      "presentation_rect": [
       8,
@@ -3359,7 +3359,7 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      77,
+      54,
       378,
       8
      ],
@@ -3384,7 +3384,7 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      87,
+      65,
       378,
       19
      ],
@@ -3408,7 +3408,7 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      112,
+      91,
       378,
       18
      ],
@@ -3461,7 +3461,7 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      133,
+      139,
       378,
       21
      ],
@@ -3484,7 +3484,7 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      157,
+      163,
       378,
       21
      ],
@@ -3504,7 +3504,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       181,
@@ -3829,11 +3829,11 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      256,
+      195,
       378,
-      23
+      24
      ],
-     "text": "Lead: enable manually after BUILD (future beta).",
+     "text": "Enable Lead manually after BUILD (beta).",
      "fontsize": 10,
      "linecount": 2
     }
@@ -3850,7 +3850,7 @@
       378,
       20
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       54,
@@ -3894,9 +3894,9 @@
      ],
      "presentation": 1,
      "presentation_rect": [
-      92,
-      210,
-      202,
+      95,
+      111,
+      188,
       21
      ],
      "text": "Songs 0-0 of 0 | Page 1/1",
@@ -3918,8 +3918,8 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      210,
-      80,
+      111,
+      79,
       21
      ],
      "text": "Previous",
@@ -3956,9 +3956,9 @@
      ],
      "presentation": 1,
      "presentation_rect": [
-      300,
-      210,
-      80,
+      296,
+      111,
+      84,
       21
      ],
      "text": "Next",
@@ -3979,6 +3979,25 @@
       22
      ],
      "text": "reviewnext"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-cuebuttonroute",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      1300,
+      720,
+      115,
+      22
+     ],
+     "text": "route cuebutton",
+     "outlettype": [
+      "",
+      ""
+     ]
     }
    }
   ],
@@ -6439,6 +6458,30 @@
      ],
      "destination": [
       "obj-js",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-js",
+      5
+     ],
+     "destination": [
+      "obj-cuebuttonroute",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-cuebuttonroute",
+      0
+     ],
+     "destination": [
+      "obj-cuebtn",
       0
      ]
     }
