@@ -125,7 +125,7 @@ function reviewnext() {
 }
 function cueinfo() {
   var value = arrayfromargs(arguments).join(" ");
-  var match = /^Cue Folder: (.*?)(?: \\((?:selected|[0-9]+ cues)\\))?$/.exec(value);
+  var match = /^Cue Folder: (.*?)(?: \((?:selected|[0-9]+ cues)\))?$/.exec(value);
   var selected = value && value.indexOf("NOT SELECTED") < 0;
   var folder = selected ? (match ? match[1] : value.replace(/^Cue Folder: /, "")) : "";
   if (folder.length > 19) folder = folder.substring(0, 16) + "...";
