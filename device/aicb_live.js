@@ -3,7 +3,7 @@
 // 3 -> stored parameters: "slot <i> <start> <end> <bpm>" (tempo range of each song, saved with the Live Set).
 autowatch = 1;
 inlets = 1;
-outlets = 4;
+outlets = 5;
 
 var SECTIONS_NAME = "SECTIONS";
 var CUES_NAME = "GUIDE CUES";
@@ -89,6 +89,7 @@ function analyze() {
   if (songs.length > MAX_SONGS) { fail("only up to 16 songs are supported"); return; }
   state = { busy: true, mode: "review", track: tr, songs: songs, idx: -1, results: [], doneSecs: [] };
   bar(0);
+  for (var line = 0; line < MAX_SONGS; line++) outlet(4, "row", line, "set", "");
   nextSong();
 }
 function analysis() {
@@ -109,15 +110,29 @@ function buildreview() {
 function finishReview() {
   review = state.results.slice();
   var ok = review.filter(function(r){ return !r.error; });
+  var sig = 4;
+  try { sig = Math.max(1, num(api("live_set"), "signature_numerator")); } catch (e) {}
+  // A global signature is sufficient for uniform-meter sets. Positions with time-signature
+  // automation need a dedicated meter-map resolver in a later version.
   for (var i = 0; i < review.length; i++) {
     var r = review[i];
+    var pos = Number(r.start) || 0, b = Math.floor(pos / sig) + 1;
+    var beat = Math.floor(pos % sig) + 1;
+    var ticks = Math.round((pos - Math.floor(pos)) * 960);
+    var loc = b + "." + beat + "." + (ticks + 1);
+    var displayName = String(r.clip || r.name || "?");
+    if (displayName.length > 22) displayName = displayName.substring(0, 19) + "...";
+    var row = r.error ? (i+1) + ". " + displayName + " | ERROR" :
+      (i+1) + ". " + displayName + " | " + r.bpm.toFixed(1) +
+      " BPM | " + Math.floor(r.duration / 60) + ":" + ("0"+Math.floor(r.duration%60)).slice(-2) +
+      " | Bar " + loc + " | Warp " + (r.warp ? "ON" : "OFF");
+    outlet(4, "row", i, "set", row);
     post("SeqAnalyzer review " + (i+1) + ": " + r.clip + " | " +
       (r.error || (r.bpm.toFixed(2) + " BPM | " + r.duration.toFixed(1) +
       " sec | start " + (Math.floor(r.start / Math.max(1, r.meter)) + 1) + ".1.1 (beat " + r.start.toFixed(2) + ")" + " | Warp " + (r.warp ? "ON" : "OFF"))) + "\n");
   }
-  say("ANALYZE: " + ok.length + "/" + review.length + " songs. " +
-    ok.map(function(r){return r.clip + " " + r.bpm.toFixed(1) + " BPM, Warp " + (r.warp ? "ON" : "OFF");}).join(" | ") +
-    ". Full results in Max Console. BUILD is not yet enabled; enable Lead after BUILD.");
+  say("ANALYZE: " + ok.length + "/" + review.length +
+    " songs. Results below. BUILD is disabled (alpha).");
   bar(100);
   state.busy = false;
 }
