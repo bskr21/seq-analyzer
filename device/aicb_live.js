@@ -119,9 +119,9 @@ function buildreview() {
   say("BUILD is not enabled in v0.8.0-alpha. ANALYZE is read-only; Warp and clips are unchanged.");
 }
 // The device display has room for three rows. Keep all results and page through them.
-function uitab(value) {selectedTab=Math.max(0,Math.min(2,Number(value)||0));refreshPanels();}
-function resultstoggle() {resultsExpanded=!resultsExpanded;refreshPanels();}
-function uiVisible(name,visible) {try{var b=this.patcher.getnamed(name);if(b)b.hidden=visible?0:1;}catch(e){post("SeqAnalyzer UI "+e+"\\n");}}
+function uitab(value) { /* tab UI deferred until a standalone Max test proves its behavior */ }
+function resultstoggle() { /* list always visible in alpha.6 */ }
+function uiVisible(name,visible) { /* static alpha.6 UI: presentation controls remain visible */ }
 function refreshPanels(){
  var groups=[["obj-setupheading","obj-setupdescription","obj-cuebtn"],
  ["obj-buildbtn","obj-progress","obj-status","obj-resultheading","obj-detailtoggle","obj-resultcount"],
