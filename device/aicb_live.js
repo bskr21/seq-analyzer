@@ -75,11 +75,14 @@ function baseName(p) { return String(p).replace(/^.*[\/\\]/, ""); }
 // v0.8.0-alpha: read-only analysis results, kept until the next scan.
 var review = null;
 var reviewPage = 0;
-var REVIEW_PAGE_SIZE = 2;
+var REVIEW_PAGE_SIZE = 16;
+var selectedTab = 1, resultsExpanded = false;
 function analyze() {
   if (state && state.busy) { say("Analysis is running."); return; }
   review = null;
   reviewPage = 0;
+  resultsExpanded = false;
+  refreshPanels();
   showReviewPage();
   var tr = api("this_device canonical_parent");
   if (trackIndex(tr) < 0 || num(tr, "has_audio_input") !== 1) { fail("put the device on an audio track"); return; }
@@ -115,14 +118,20 @@ function buildreview() {
   say("BUILD is not enabled in v0.8.0-alpha. ANALYZE is read-only; Warp and clips are unchanged.");
 }
 // The device display has room for three rows. Keep all results and page through them.
-function reviewprev() {
-  if (reviewPage > 0) reviewPage--;
-  showReviewPage();
+function uitab(value) {selectedTab=Math.max(0,Math.min(2,Number(value)||0));refreshPanels();}
+function resultstoggle() {resultsExpanded=!resultsExpanded;refreshPanels();}
+function uiVisible(name,visible) {try{var b=this.patcher.getnamed(name);if(b)b.hidden=visible?0:1;}catch(e){post("SeqAnalyzer UI "+e+"\\n");}}
+function refreshPanels(){
+ var groups=[["obj-setupheading","obj-setupdescription","obj-cuebtn"],
+ ["obj-buildbtn","obj-progress","obj-status","obj-resultheading","obj-detailtoggle","obj-resultcount"],
+ ["obj-tempobtn","obj-leadnotice","obj-builddescription"]];
+ for(var g=0;g<groups.length;g++)for(var j=0;j<groups[g].length;j++)uiVisible(groups[g][j],g===selectedTab);
+ for(var x=0;x<MAX_SONGS;x++)uiVisible("obj-review"+x,selectedTab===1&&resultsExpanded);
+ outlet(4,"expandlabel","text",resultsExpanded?"Hide Song List":"Show Song List");
+ outlet(4,"expandlabel","texton",resultsExpanded?"Hide Song List":"Show Song List");
 }
-function reviewnext() {
-  if (review && (reviewPage + 1) * REVIEW_PAGE_SIZE < review.length) reviewPage++;
-  showReviewPage();
-}
+function reviewprev(){}
+function reviewnext(){}
 function cueinfo() {
   var value = arrayfromargs(arguments).join(" ");
   var match = /^Cue Folder: (.*?)(?: \((?:selected|[0-9]+ cues)\))?$/.exec(value);
@@ -132,8 +141,9 @@ function cueinfo() {
   // Set the button label and color on the actual live.text via Max attribute messages.
   outlet(5, "cuebutton", "text", selected ? folder : "Choose Cue Folder");
   outlet(5, "cuebutton", "texton", selected ? folder : "Choose Cue Folder");
-  outlet(5, "cuebutton", "bgcolor", selected ? 1.0 : 0.18,
+  outlet(5, "cuebutton", "activebgcolor", selected ? 1.0 : 0.18,
     selected ? 0.63 : 0.18, selected ? 0.14 : 0.18, 1.0);
+  outlet(5, "cuebutton", "activebgoncolor", 1, 0.63, 0.14, 1);
   outlet(5, "cuebutton", "textcolor", selected ? 0.08 : 0.85,
     selected ? 0.08 : 0.85, selected ? 0.08 : 0.85, 1.0);
 }
@@ -154,6 +164,7 @@ function showReviewPage() {
       " BPM | " + duration + " | Bar " + loc + " | Warp " + (r.warp ? "ON" : "OFF");
     outlet(4, "row", j, "set", row);
   }
+  outlet(4, "count", "set", "Analyzed " + data.length + " songs");
   outlet(4, "page", "set", "Songs " + (data.length ? reviewPage * REVIEW_PAGE_SIZE + 1 : 0) +
     "-" + Math.min(data.length, (reviewPage + 1) * REVIEW_PAGE_SIZE) +
     " of " + data.length + "  |  Page " + (reviewPage + 1) + "/" + pages);
@@ -169,6 +180,8 @@ function arrangementPosition(start) {
 function finishReview() {
   review = state.results.slice();
   reviewPage = 0;
+  resultsExpanded = true;
+  refreshPanels();
   var ok = review.filter(function(r){ return !r.error; });
   for (var i = 0; i < review.length; i++) {
     var r = review[i];
@@ -178,7 +191,7 @@ function finishReview() {
       " | Warp " + (r.warp ? "ON" : "OFF"))) + "\\n");
   }
   showReviewPage();
-  say("ANALYZE: " + ok.length + "/" + review.length + " songs. Use Previous/Next to see all. BUILD disabled.");
+  say("ANALYZE: " + ok.length + "/" + review.length + " songs. Show/Hide Song List available. BUILD disabled.");
   bar(100);
   state.busy = false;
 }
