@@ -26,7 +26,11 @@ function fmtEta(sec) {
   if (sec < 50) return " - about " + Math.max(5, Math.round(sec / 5) * 5) + " s left";
   return " - about " + Math.round(sec / 60) + " min left";
 }
-function songTag() { return state && state.songs && state.songs.length > 1 ? "Song " + (state.idx + 1) + "/" + state.songs.length + ": " : ""; }
+function songTag() {
+  return state && state.busy && state.songs && state.songs.length > 1 &&
+    state.idx >= 0 && state.idx < state.songs.length ?
+    "Song " + (state.idx + 1) + "/" + state.songs.length + ": " : "";
+}
 // from node.script: progress <percent> <eta seconds> for the current song.
 // With several songs, bar and text show the overall percentage and the time left for all of them.
 function progress(pct, eta) {
@@ -71,7 +75,7 @@ function baseName(p) { return String(p).replace(/^.*[\/\\]/, ""); }
 // v0.8.0-alpha: read-only analysis results, kept until the next scan.
 var review = null;
 var reviewPage = 0;
-var REVIEW_PAGE_SIZE = 3;
+var REVIEW_PAGE_SIZE = 2;
 function analyze() {
   if (state && state.busy) { say("Analysis is running."); return; }
   review = null;
@@ -121,7 +125,17 @@ function reviewnext() {
 }
 function cueinfo() {
   var value = arrayfromargs(arguments).join(" ");
-  outlet(5, "set", value || "Cue Folder: NOT SELECTED");
+  var match = /^Cue Folder: (.*?)(?: \\((?:selected|[0-9]+ cues)\\))?$/.exec(value);
+  var selected = value && value.indexOf("NOT SELECTED") < 0;
+  var folder = selected ? (match ? match[1] : value.replace(/^Cue Folder: /, "")) : "";
+  if (folder.length > 19) folder = folder.substring(0, 16) + "...";
+  // Set the button label and color on the actual live.text via Max attribute messages.
+  outlet(5, "cuebutton", "text", selected ? folder : "Choose Cue Folder");
+  outlet(5, "cuebutton", "texton", selected ? folder : "Choose Cue Folder");
+  outlet(5, "cuebutton", "bgcolor", selected ? 1.0 : 0.18,
+    selected ? 0.63 : 0.18, selected ? 0.14 : 0.18, 1.0);
+  outlet(5, "cuebutton", "textcolor", selected ? 0.08 : 0.85,
+    selected ? 0.08 : 0.85, selected ? 0.08 : 0.85, 1.0);
 }
 function showReviewPage() {
   var data = review || [], pages = Math.max(1, Math.ceil(data.length / REVIEW_PAGE_SIZE));
@@ -207,7 +221,15 @@ function failed() {               // analysis of one song failed: report it and 
   else if (state.mode === "review") finishReview(); else finishAll();
 }
 // messages coming back from node.script
-function status() { say(songTag() + arrayfromargs(arguments).join(" ")); }
+function status() {
+  var msg = arrayfromargs(arguments).join(" ");
+  if (/^Ready[.]/.test(msg)) {
+    if (!state || !state.busy) say(msg);
+    return;
+  }
+  if (state && state.mode === "review" && !state.busy) return;
+  say(state && state.busy ? songTag() + msg : msg);
+}
 function loadbang() { bar(0); }
 function options() {}
 
