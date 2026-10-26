@@ -30,7 +30,7 @@
   "enablehscroll": 1,
   "enablevscroll": 1,
   "devicewidth": 396,
-  "description": "Detects BPM and song sections, adds section clips and guide cues.",
+  "description": "v0.8.0-alpha.2 analysis-only panel: per-song BPM duration Arrangement bar Warp.",
   "digest": "",
   "tags": "",
   "style": "",
@@ -82,7 +82,7 @@
       200,
       20
      ],
-     "text": "SEQUENCER ANALYZER",
+     "text": "SEQUENCER ANALYZER | alpha.2",
      "presentation": 1,
      "presentation_rect": [
       8,
@@ -3832,7 +3832,7 @@
       378,
       35
      ],
-     "text": "Reminder: Enable LEAD manually after BUILD (not available in alpha).",
+     "text": "Activate LEAD manually after BUILD (future beta).",
      "fontsize": 10,
      "linecount": 2
     }
