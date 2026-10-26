@@ -16,7 +16,7 @@
    480
   ],
   "openinpresentation": 1,
-  "default_fontsize": 10.0,
+  "default_fontsize": 10,
   "default_fontface": 0,
   "default_fontname": "Arial Bold",
   "gridonopen": 1,
@@ -29,7 +29,7 @@
   "boxanimatetime": 200,
   "enablehscroll": 1,
   "enablevscroll": 1,
-  "devicewidth": 396.0,
+  "devicewidth": 396,
   "description": "Detects BPM and song sections, adds section clips and guide cues.",
   "digest": "",
   "tags": "",
@@ -91,7 +91,7 @@
       18
      ],
      "fontface": 1,
-     "fontsize": 12.0
+     "fontsize": 12
     }
    },
    {
@@ -153,7 +153,7 @@
       "",
       ""
      ],
-     "text": "Analyze & Build",
+     "text": "ANALYZE",
      "presentation": 1,
      "presentation_rect": [
       142,
@@ -162,12 +162,12 @@
       20
      ],
      "mode": 0,
-     "texton": "Analyze & Build",
-     "varname": "Build",
+     "texton": "ANALYZE",
+     "varname": "Analyze",
      "parameter_enable": 1,
      "saved_attribute_attributes": {
       "valueof": {
-       "parameter_longname": "Build",
+       "parameter_longname": "Analyze",
        "parameter_shortname": "Build",
        "parameter_type": 2,
        "parameter_mmax": 1,
@@ -196,7 +196,7 @@
       "",
       ""
      ],
-     "text": "Tempo Follow: Off",
+     "text": "BUILD (beta)",
      "presentation": 1,
      "presentation_rect": [
       276,
@@ -204,35 +204,31 @@
       110,
       20
      ],
-     "mode": 1,
-     "texton": "Tempo Follow: On",
-     "varname": "TempoFollow",
+     "mode": 0,
+     "texton": "BUILD (beta)",
+     "varname": "BuildBeta",
      "parameter_enable": 1,
      "activebgoncolor": [
-      1.0,
+      1,
       0.71,
       0.2,
-      1.0
+      1
      ],
      "activetextoncolor": [
       0.1,
       0.1,
       0.1,
-      1.0
+      1
      ],
      "saved_attribute_attributes": {
       "valueof": {
-       "parameter_longname": "TempoFollow",
+       "parameter_longname": "BuildBeta",
        "parameter_shortname": "Follow",
        "parameter_type": 2,
        "parameter_mmax": 1,
        "parameter_enum": [
         "off",
         "on"
-       ],
-       "parameter_initial_enable": 1,
-       "parameter_initial": [
-        1
        ],
        "parameter_invisible": 1
       }
@@ -335,8 +331,8 @@
        "parameter_longname": "FollowStart0",
        "parameter_shortname": "FollowStart0",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -388,8 +384,8 @@
        "parameter_longname": "FollowEnd0",
        "parameter_shortname": "FollowEnd0",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -441,8 +437,8 @@
        "parameter_longname": "FollowBpm0",
        "parameter_shortname": "FollowBpm0",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -514,8 +510,8 @@
        "parameter_longname": "FollowStart1",
        "parameter_shortname": "FollowStart1",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -567,8 +563,8 @@
        "parameter_longname": "FollowEnd1",
        "parameter_shortname": "FollowEnd1",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -620,8 +616,8 @@
        "parameter_longname": "FollowBpm1",
        "parameter_shortname": "FollowBpm1",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -693,8 +689,8 @@
        "parameter_longname": "FollowStart2",
        "parameter_shortname": "FollowStart2",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -746,8 +742,8 @@
        "parameter_longname": "FollowEnd2",
        "parameter_shortname": "FollowEnd2",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -799,8 +795,8 @@
        "parameter_longname": "FollowBpm2",
        "parameter_shortname": "FollowBpm2",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -872,8 +868,8 @@
        "parameter_longname": "FollowStart3",
        "parameter_shortname": "FollowStart3",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -925,8 +921,8 @@
        "parameter_longname": "FollowEnd3",
        "parameter_shortname": "FollowEnd3",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -978,8 +974,8 @@
        "parameter_longname": "FollowBpm3",
        "parameter_shortname": "FollowBpm3",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1051,8 +1047,8 @@
        "parameter_longname": "FollowStart4",
        "parameter_shortname": "FollowStart4",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1104,8 +1100,8 @@
        "parameter_longname": "FollowEnd4",
        "parameter_shortname": "FollowEnd4",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1157,8 +1153,8 @@
        "parameter_longname": "FollowBpm4",
        "parameter_shortname": "FollowBpm4",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1230,8 +1226,8 @@
        "parameter_longname": "FollowStart5",
        "parameter_shortname": "FollowStart5",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1283,8 +1279,8 @@
        "parameter_longname": "FollowEnd5",
        "parameter_shortname": "FollowEnd5",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1336,8 +1332,8 @@
        "parameter_longname": "FollowBpm5",
        "parameter_shortname": "FollowBpm5",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1409,8 +1405,8 @@
        "parameter_longname": "FollowStart6",
        "parameter_shortname": "FollowStart6",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1462,8 +1458,8 @@
        "parameter_longname": "FollowEnd6",
        "parameter_shortname": "FollowEnd6",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1515,8 +1511,8 @@
        "parameter_longname": "FollowBpm6",
        "parameter_shortname": "FollowBpm6",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1588,8 +1584,8 @@
        "parameter_longname": "FollowStart7",
        "parameter_shortname": "FollowStart7",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1641,8 +1637,8 @@
        "parameter_longname": "FollowEnd7",
        "parameter_shortname": "FollowEnd7",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1694,8 +1690,8 @@
        "parameter_longname": "FollowBpm7",
        "parameter_shortname": "FollowBpm7",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1767,8 +1763,8 @@
        "parameter_longname": "FollowStart8",
        "parameter_shortname": "FollowStart8",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1820,8 +1816,8 @@
        "parameter_longname": "FollowEnd8",
        "parameter_shortname": "FollowEnd8",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1873,8 +1869,8 @@
        "parameter_longname": "FollowBpm8",
        "parameter_shortname": "FollowBpm8",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1946,8 +1942,8 @@
        "parameter_longname": "FollowStart9",
        "parameter_shortname": "FollowStart9",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -1999,8 +1995,8 @@
        "parameter_longname": "FollowEnd9",
        "parameter_shortname": "FollowEnd9",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2052,8 +2048,8 @@
        "parameter_longname": "FollowBpm9",
        "parameter_shortname": "FollowBpm9",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2125,8 +2121,8 @@
        "parameter_longname": "FollowStart10",
        "parameter_shortname": "FollowStart10",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2178,8 +2174,8 @@
        "parameter_longname": "FollowEnd10",
        "parameter_shortname": "FollowEnd10",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2231,8 +2227,8 @@
        "parameter_longname": "FollowBpm10",
        "parameter_shortname": "FollowBpm10",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2304,8 +2300,8 @@
        "parameter_longname": "FollowStart11",
        "parameter_shortname": "FollowStart11",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2357,8 +2353,8 @@
        "parameter_longname": "FollowEnd11",
        "parameter_shortname": "FollowEnd11",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2410,8 +2406,8 @@
        "parameter_longname": "FollowBpm11",
        "parameter_shortname": "FollowBpm11",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2483,8 +2479,8 @@
        "parameter_longname": "FollowStart12",
        "parameter_shortname": "FollowStart12",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2536,8 +2532,8 @@
        "parameter_longname": "FollowEnd12",
        "parameter_shortname": "FollowEnd12",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2589,8 +2585,8 @@
        "parameter_longname": "FollowBpm12",
        "parameter_shortname": "FollowBpm12",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2662,8 +2658,8 @@
        "parameter_longname": "FollowStart13",
        "parameter_shortname": "FollowStart13",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2715,8 +2711,8 @@
        "parameter_longname": "FollowEnd13",
        "parameter_shortname": "FollowEnd13",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2768,8 +2764,8 @@
        "parameter_longname": "FollowBpm13",
        "parameter_shortname": "FollowBpm13",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2841,8 +2837,8 @@
        "parameter_longname": "FollowStart14",
        "parameter_shortname": "FollowStart14",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2894,8 +2890,8 @@
        "parameter_longname": "FollowEnd14",
        "parameter_shortname": "FollowEnd14",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -2947,8 +2943,8 @@
        "parameter_longname": "FollowBpm14",
        "parameter_shortname": "FollowBpm14",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -3020,8 +3016,8 @@
        "parameter_longname": "FollowStart15",
        "parameter_shortname": "FollowStart15",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -3073,8 +3069,8 @@
        "parameter_longname": "FollowEnd15",
        "parameter_shortname": "FollowEnd15",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 1000000.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 1000000,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -3126,8 +3122,8 @@
        "parameter_longname": "FollowBpm15",
        "parameter_shortname": "FollowBpm15",
        "parameter_type": 0,
-       "parameter_mmin": 0.0,
-       "parameter_mmax": 999.0,
+       "parameter_mmin": 0,
+       "parameter_mmax": 999,
        "parameter_initial_enable": 1,
        "parameter_initial": [
         0
@@ -3171,7 +3167,7 @@
      "outlettype": [
       ""
      ],
-     "text": "prepend followon"
+     "text": "buildreview"
     }
    },
    {
@@ -3244,7 +3240,7 @@
      "outlettype": [
       ""
      ],
-     "text": "build"
+     "text": "analyze"
     }
    },
    {
@@ -3382,7 +3378,7 @@
       380,
       40
      ],
-     "text": "Ready.",
+     "text": "Click ANALYZE to scan songs. BUILD will be enabled in beta.",
      "presentation": 1,
      "presentation_rect": [
       8,
