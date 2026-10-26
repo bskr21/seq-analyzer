@@ -30,7 +30,7 @@
   "enablehscroll": 1,
   "enablevscroll": 1,
   "devicewidth": 396,
-  "description": "v0.8.0-alpha.2 analysis-only panel: per-song BPM duration Arrangement bar Warp.",
+  "description": "v0.8.0-alpha.3: read-only Analyze; 3-row paginated results and persistent cue folder status.",
   "digest": "",
   "tags": "",
   "style": "",
@@ -82,7 +82,7 @@
       200,
       20
      ],
-     "text": "SEQUENCER ANALYZER | alpha.2",
+     "text": "SEQUENCER ANALYZER | alpha.3",
      "presentation": 1,
      "presentation_rect": [
       8,
@@ -3267,7 +3267,7 @@
      "id": "obj-js",
      "maxclass": "newobj",
      "numinlets": 1,
-     "numoutlets": 5,
+     "numoutlets": 6,
      "patching_rect": [
       300,
       280,
@@ -3275,6 +3275,7 @@
       22
      ],
      "outlettype": [
+      "",
       "",
       "",
       "",
@@ -3358,7 +3359,7 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      54,
+      77,
       378,
       8
      ],
@@ -3383,9 +3384,9 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      64,
+      87,
       378,
-      22
+      19
      ],
      "linecount": 1,
      "fontsize": 10.5
@@ -3403,12 +3404,12 @@
       380,
       20
      ],
-     "text": "ANALYSIS RESULTS — Title | BPM | Duration | Bar | Warp",
+     "text": "SONG | BPM | DURATION | START BAR | WARP",
      "presentation": 1,
      "presentation_rect": [
       8,
-      89,
-      380,
+      112,
+      378,
       18
      ],
      "fontface": 1,
@@ -3460,9 +3461,9 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      108,
+      133,
       378,
-      20
+      21
      ],
      "text": "",
      "fontsize": 9.5
@@ -3483,9 +3484,9 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      130,
+      157,
       378,
-      20
+      21
      ],
      "text": "",
      "fontsize": 9.5
@@ -3506,9 +3507,9 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      152,
+      181,
       378,
-      20
+      21
      ],
      "text": "",
      "fontsize": 9.5
@@ -3526,7 +3527,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       174,
@@ -3549,7 +3550,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       196,
@@ -3572,7 +3573,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       218,
@@ -3595,7 +3596,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       240,
@@ -3618,7 +3619,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       262,
@@ -3641,7 +3642,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       284,
@@ -3664,7 +3665,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       306,
@@ -3687,7 +3688,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       328,
@@ -3710,7 +3711,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       350,
@@ -3733,7 +3734,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       372,
@@ -3756,7 +3757,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       394,
@@ -3779,7 +3780,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       416,
@@ -3802,7 +3803,7 @@
       380,
       22
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       438,
@@ -3828,13 +3829,156 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      468,
+      256,
       378,
-      35
+      23
      ],
-     "text": "Activate LEAD manually after BUILD (future beta).",
+     "text": "Lead: enable manually after BUILD (future beta).",
      "fontsize": 10,
      "linecount": 2
+    }
+   },
+   {
+    "box": {
+     "id": "obj-cueinfo",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1020,
+      700,
+      378,
+      20
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      54,
+      378,
+      20
+     ],
+     "text": "Cue Folder: NOT SELECTED",
+     "fontsize": 10
+    }
+   },
+   {
+    "box": {
+     "id": "obj-reviewpaging",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      1020,
+      735,
+      110,
+      22
+     ],
+     "text": "route page",
+     "outlettype": [
+      "",
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-pagelabel",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      1040,
+      775,
+      186,
+      21
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      92,
+      210,
+      202,
+      21
+     ],
+     "text": "Songs 0-0 of 0 | Page 1/1",
+     "fontsize": 10
+    }
+   },
+   {
+    "box": {
+     "id": "obj-pageprev",
+     "maxclass": "textbutton",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "patching_rect": [
+      1050,
+      840,
+      84,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      8,
+      210,
+      80,
+      21
+     ],
+     "text": "Previous",
+     "texton": "Previous",
+     "mode": 0
+    }
+   },
+   {
+    "box": {
+     "id": "obj-pageprevmsg",
+     "maxclass": "message",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "patching_rect": [
+      1150,
+      840,
+      90,
+      22
+     ],
+     "text": "reviewprev"
+    }
+   },
+   {
+    "box": {
+     "id": "obj-pagenext",
+     "maxclass": "textbutton",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "patching_rect": [
+      1050,
+      875,
+      84,
+      22
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      300,
+      210,
+      80,
+      21
+     ],
+     "text": "Next",
+     "texton": "Next",
+     "mode": 0
+    }
+   },
+   {
+    "box": {
+     "id": "obj-pagenextmsg",
+     "maxclass": "message",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "patching_rect": [
+      1150,
+      875,
+      90,
+      22
+     ],
+     "text": "reviewnext"
     }
    }
   ],
@@ -6211,6 +6355,90 @@
      ],
      "destination": [
       "obj-review15",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-js",
+      5
+     ],
+     "destination": [
+      "obj-cueinfo",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-rowroute",
+      1
+     ],
+     "destination": [
+      "obj-reviewpaging",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-reviewpaging",
+      0
+     ],
+     "destination": [
+      "obj-pagelabel",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pageprev",
+      0
+     ],
+     "destination": [
+      "obj-pageprevmsg",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pageprevmsg",
+      0
+     ],
+     "destination": [
+      "obj-js",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pagenext",
+      0
+     ],
+     "destination": [
+      "obj-pagenextmsg",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "obj-pagenextmsg",
+      0
+     ],
+     "destination": [
+      "obj-js",
       0
      ]
     }
