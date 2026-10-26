@@ -68,6 +68,60 @@ function clipAt(track, start) {
 function baseName(p) { return String(p).replace(/^.*[\/\\]/, ""); }
 
 // ------------------------------------------------------------------ entry points
+// v0.8.0-alpha: read-only analysis results, kept until the next scan.
+var review = null;
+function analyze() {
+  if (state && state.busy) { say("Analysis is running."); return; }
+  review = null;
+  var tr = api("this_device canonical_parent");
+  if (trackIndex(tr) < 0 || num(tr, "has_audio_input") !== 1) { fail("put the device on an audio track"); return; }
+  var ids = idList(tr, "arrangement_clips"), songs = [];
+  for (var i = 0; i < ids.length; i++) {
+    var c = byId(ids[i]);
+    if (num(c, "is_audio_clip") !== 1) continue;
+    var duration = num(c, "sample_length") / Math.max(1, num(c, "sample_rate"));
+    if (duration < MIN_SONG_SECONDS) continue;
+    songs.push({ id: c.id, file: str(c, "file_path"), clip: str(c, "name"),
+      start: num(c, "start_time"), duration: duration, warp: num(c, "warping") });
+  }
+  songs.sort(function(a,b) { return a.start - b.start; });
+  if (!songs.length) { fail("no audio clips over 30 seconds in this track"); return; }
+  if (songs.length > MAX_SONGS) { fail("only up to 16 songs are supported"); return; }
+  state = { busy: true, mode: "review", track: tr, songs: songs, idx: -1, results: [], doneSecs: [] };
+  bar(0);
+  nextSong();
+}
+function analysis() {
+  if (!state || state.mode !== "review" || !state.cur) return;
+  try {
+    var result = JSON.parse(arrayfromargs(arguments).join(" "));
+    var s = state.songs[state.idx];
+    state.results.push({ id: s.id, file: s.file, clip: s.clip, start: s.start,
+      duration: s.duration, warp: s.warp, bpm: Number(result.bpm),
+      meter: Number(result.meter), sections: (result.sections || []).length,
+      tempo_stable: result.tempo_stable, alternatives: result.tempo_alternatives || [] });
+    later(nextSong, 30);
+  } catch (e) { fail("could not read analysis JSON: " + e); }
+}
+function buildreview() {
+  say("BUILD is not enabled in v0.8.0-alpha. ANALYZE is read-only; Warp and clips are unchanged.");
+}
+function finishReview() {
+  review = state.results.slice();
+  var ok = review.filter(function(r){ return !r.error; });
+  for (var i = 0; i < review.length; i++) {
+    var r = review[i];
+    post("SeqAnalyzer review " + (i+1) + ": " + r.clip + " | " +
+      (r.error || (r.bpm.toFixed(2) + " BPM | " + r.duration.toFixed(1) +
+      " sec | start beat " + r.start.toFixed(2) + " | Warp " + (r.warp ? "ON" : "OFF"))) + "\n");
+  }
+  say("ANALYZE: " + ok.length + "/" + review.length + " songs. " +
+    ok.map(function(r){return r.clip + " " + r.bpm.toFixed(1) + " BPM, Warp " + (r.warp ? "ON" : "OFF");}).join(" | ") +
+    ". Full results in Max Console. BUILD is not yet enabled; enable Lead after BUILD.");
+  bar(100);
+  state.busy = false;
+}
+// Legacy v0.7.1 build retained for reference, but not exposed by the alpha device UI.
 // Analyze & Build: every song (audio clip >= 30 s) on this track, left to right.
 function build() {
   if (state && state.busy) { say("Already working..."); return; }
@@ -91,19 +145,19 @@ function build() {
 function nextSong() {
   if (state.idx >= 0 && state.songT0) state.doneSecs.push((Date.now() - state.songT0) / 1000);
   state.idx++;
-  if (state.idx >= state.songs.length) { finishAll(); return; }
+  if (state.idx >= state.songs.length) { if (state.mode === "review") finishReview(); else finishAll(); return; }
   var s = state.songs[state.idx];
   state.songT0 = Date.now();
   state.cur = { clipId: s.id, file: s.file, name: baseName(s.file), clip: s.clip };
   say(songTag() + "analyzing " + state.cur.name + " (first run can take a few minutes)");
-  outlet(0, "analyze", JSON.stringify({ file: s.file, clip: s.clip }));
+  outlet(0, state.mode === "review" ? "inspect" : "analyze", JSON.stringify({ file: s.file, clip: s.clip }));
 }
 
 function failed() {               // analysis of one song failed: report it and carry on
   if (!state) return;
   state.results.push({ name: state.cur ? state.cur.name : "?", error: lastText });
   if (state.songs && state.idx < state.songs.length - 1) later(nextSong, 50);
-  else finishAll();
+  else if (state.mode === "review") finishReview(); else finishAll();
 }
 // messages coming back from node.script
 function status() { say(songTag() + arrayfromargs(arguments).join(" ")); }
@@ -467,7 +521,7 @@ function finishAll() {
 // While the playhead is inside a song's range (first cue -> end of last section), set Live's tempo to that
 // song's BPM. Ranges are kept in hidden stored parameters (MAX_SONGS slots), so they are saved with the set.
 var LOOKAHEAD = 0.25;          // beats: switch a little early to cover the notification interval
-var follow = { on: 1, slots: [], inside: -1 };
+var follow = { on: 0, slots: [], inside: -1 };
 var songObs = null, tempoApi = null, pendingTempo = null;
 
 function storeSlots(list) {
