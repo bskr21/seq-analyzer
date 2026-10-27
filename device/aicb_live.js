@@ -116,8 +116,52 @@ function analysis() {
   } catch (e) { fail("could not read analysis JSON: " + e); }
 }
 function buildreview() {
-  say("BUILD is not enabled in v0.8.0-alpha. ANALYZE is read-only; Warp and clips are unchanged.");
+  if (state && state.busy) { say("Wait for ANALYZE to finish."); return; }
+  if (!review || !review.length) { say("Run ANALYZE first."); return; }
+  var tr = api("this_device canonical_parent"), trackNo = trackIndex(tr);
+  if (trackNo < 0) { say("Cannot find audio track."); return; }
+  // Beta.1 intentionally writes only ONE clip. More clips wait until this is verified in Live.
+  var target = null;
+  for (var i = 0; i < review.length; i++) {
+    if (review[i].error) continue;
+    if (!review[i].warp) continue;
+    if (review[i].tempo_stable === false) continue;
+    target = review[i];
+    break;
+  }
+  if (!target) { say("BUILD BLOCKED: need a successfully analyzed, Warp ON, stable-BPM clip."); return; }
+  var c = null;
+  try { c = byId(target.id); } catch (e) { say("Clip no longer exists. ANALYZE again."); return; }
+  if (!c || Math.abs(num(c, "start_time") - target.start) > 0.02 ||
+      str(c,"name") !== target.clip || str(c,"file_path") !== target.file) {
+    say("Clip changed after ANALYZE. Run ANALYZE again."); return;
+  }
+  if (num(c,"warping") !== 1) { say("Warp is OFF. Enable Warp and ANALYZE again."); return; }
+  if (!isFinite(target.bpm) || target.bpm < 20 || target.bpm > 999) {
+    say("Invalid detected BPM. ANALYZE again."); return;
+  }
+  state = {busy: true, mode: "warpbuild", target: target};
+  say("BUILD beta.1: applying " + target.bpm.toFixed(2) + " BPM to " + target.clip +
+      " (one clip only). Stop playback first.");
+  outlet(0, "buildwarp", JSON.stringify({action:"build_one", track_index:trackNo,
+    clip_name:target.clip, file:target.file, start:target.start,
+    duration:target.duration, bpm:target.bpm}));
 }
+function buildresult() {
+  var data = null;
+  try { data = JSON.parse(arrayfromargs(arguments).join(" ")); }
+  catch(e) { say("BUILD: malformed Remote Script reply"); state = null; return; }
+  if (state) state.busy = false;
+  if (!data.ok) {
+    say("BUILD BLOCKED/FAILED: " + (data.error || "unknown error") + ". Check Max Console.");
+    post("SeqAnalyzer BUILD: " + JSON.stringify(data) + "\\n");
+    return;
+  }
+  say("BUILD done: " + data.result.name + " " + data.result.bpm +
+      " BPM. Verify markers and clip end, then manually enable Lead.");
+  post("SeqAnalyzer BUILD result: " + JSON.stringify(data.result) + "\\n");
+}
+
 // The device display has room for three rows. Keep all results and page through them.
 function uitab(value) { /* tab UI deferred until a standalone Max test proves its behavior */ }
 function resultstoggle() { /* list always visible in alpha.6 */ }
