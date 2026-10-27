@@ -1,6 +1,7 @@
 """Offline tests for the non-destructive build planning and validation."""
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
 
 PATH = Path(__file__).resolve().parents[1] / "remote" / "SeqAnalyzer_Remote" / "warp_build.py"
@@ -21,7 +22,8 @@ class Clip:
         self.end_marker = 416.0
         self.sample_length = 208 * 44100
         self.sample_rate = 44100
-        self.warp_markers = [object(), object()]
+        self.warp_markers = [SimpleNamespace(sample_time=0, beat_time=0),
+                             SimpleNamespace(sample_time=0.015625, beat_time=0.03125)]
         self.added = []
     def add_warp_marker(self, marker):
         self.added.append(marker)
@@ -44,6 +46,11 @@ class BuildTests(unittest.TestCase):
         clip = Clip()
         clip.warp_markers.append(object())
         with self.assertRaisesRegex(wb.BuildRejected, "two original"):
+            wb.validate_clip(clip, 64, 208)
+    def test_reject_nonzero_anchor(self):
+        clip = Clip()
+        clip.warp_markers[0].sample_time = 2.0
+        with self.assertRaisesRegex(wb.BuildRejected, "first Warp Marker"):
             wb.validate_clip(clip, 64, 208)
     def test_reject_moved_clip(self):
         clip = Clip()
