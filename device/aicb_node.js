@@ -256,13 +256,13 @@ function sendBuildRequest(request) {
     client.on("data", chunk => {
       response += chunk.toString("utf8");
       if (response.length > 65536) return complete(new Error("Remote reply too large"));
-      const end = response.indexOf("\\n");
+      const end = response.indexOf("\n");
       if (end >= 0) {
         try { complete(null, JSON.parse(response.slice(0, end))); }
         catch (err) { complete(err); }
       }
     });
-    client.connect(9128, "127.0.0.1", () => client.write(JSON.stringify(request) + "\\n"));
+    client.connect(9128, "127.0.0.1", () => client.write(JSON.stringify(request) + "\n"));
   });
 }
 
