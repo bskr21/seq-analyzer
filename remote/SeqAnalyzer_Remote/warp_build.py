@@ -65,6 +65,9 @@ def validate_clip(clip, expected_start, expected_duration):
     markers = list(clip.warp_markers)
     if len(markers) != 2:
         raise BuildRejected("expected exactly two original Warp Markers; custom or previously built map detected")
+    first = min(markers, key=lambda m: float(m.sample_time))
+    if abs(float(first.sample_time)) > TOL or abs(float(first.beat_time)) > TOL:
+        raise BuildRejected("first Warp Marker is not 0 seconds / 0 beats; manual alignment required")
     return dur
 
 def apply_clip(clip, bpm, expected_start, expected_duration, next_start, marker_factory):
