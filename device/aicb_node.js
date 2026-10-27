@@ -236,7 +236,46 @@ async function run(file, clipName, inspectOnly = false) {
   } finally { busy = false; }
 }
 
+
+// v0.8.0-beta.1: local socket to the dedicated Python Remote Script.
+// Live Object Model operations run exclusively on Live's main thread in the Remote Script.
+function sendBuildRequest(request) {
+  return new Promise((resolve, reject) => {
+    const net = require("net");
+    const client = new net.Socket();
+    let done = false, response = "";
+    const complete = (err, result) => {
+      if (done) return;
+      done = true;
+      client.destroy();
+      if (err) reject(err); else resolve(result);
+    };
+    client.setTimeout(17000);
+    client.on("error", err => complete(err));
+    client.on("timeout", () => complete(new Error("Remote Script timed out")));
+    client.on("data", chunk => {
+      response += chunk.toString("utf8");
+      if (response.length > 65536) return complete(new Error("Remote reply too large"));
+      const end = response.indexOf("\\n");
+      if (end >= 0) {
+        try { complete(null, JSON.parse(response.slice(0, end))); }
+        catch (err) { complete(err); }
+      }
+    });
+    client.connect(9128, "127.0.0.1", () => client.write(JSON.stringify(request) + "\\n"));
+  });
+}
+
 if (maxAPI) {
+  maxAPI.addHandler("buildwarp", async (...parts) => {
+    try {
+      const request = JSON.parse(parts.join(" "));
+      const result = await sendBuildRequest(request);
+      await maxAPI.outlet("buildresult", JSON.stringify(result));
+    } catch (e) {
+      await maxAPI.outlet("buildresult", JSON.stringify({ok:false,error:"Remote Script unavailable: "+e.message}));
+    }
+  });
   // analyze {"file": ..., "clip": ...}  (older form: analyze <path>)
   maxAPI.addHandler("analyze", (...parts) => {
     const txt = parts.join(" ");
