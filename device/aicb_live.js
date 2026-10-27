@@ -154,12 +154,12 @@ function buildresult() {
   if (state) state.busy = false;
   if (!data.ok) {
     say("BUILD BLOCKED/FAILED: " + (data.error || "unknown error") + ". Check Max Console.");
-    post("SeqAnalyzer BUILD: " + JSON.stringify(data) + "\\n");
+    post("SeqAnalyzer BUILD: " + JSON.stringify(data) + "\n");
     return;
   }
   say("BUILD done: " + data.result.name + " " + data.result.bpm +
       " BPM. Verify markers and clip end, then manually enable Lead.");
-  post("SeqAnalyzer BUILD result: " + JSON.stringify(data.result) + "\\n");
+  post("SeqAnalyzer BUILD result: " + JSON.stringify(data.result) + "\n");
 }
 
 // The device display has room for three rows. Keep all results and page through them.
@@ -233,7 +233,7 @@ function finishReview() {
     post("SeqAnalyzer review " + (i+1) + ": " + (r.clip || r.name) + " | " +
       (r.error || (r.bpm.toFixed(2) + " BPM | " + r.duration.toFixed(1) +
       " sec | start beat " + r.start.toFixed(2) +
-      " | Warp " + (r.warp ? "ON" : "OFF"))) + "\\n");
+      " | Warp " + (r.warp ? "ON" : "OFF"))) + "\n");
   }
   showReviewPage();
   say("ANALYZE: " + ok.length + "/" + review.length + " songs. Show/Hide Song List available. BUILD disabled.");
