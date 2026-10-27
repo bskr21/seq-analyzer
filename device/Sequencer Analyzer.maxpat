@@ -29,7 +29,7 @@
   "boxanimatetime": 200,
   "enablehscroll": 1,
   "enablevscroll": 1,
-  "devicewidth": 396,
+  "devicewidth": 600.0,
   "description": "alpha.6 recovery UI: permanently visible Cue Folder, Analyze, Build placeholder, scrollable song table.",
   "digest": "",
   "tags": "",
@@ -82,12 +82,12 @@
       200,
       20
      ],
-     "text": "SEQUENCER ANALYZER | alpha.6",
+     "text": "SEQUENCER ANALYZER | alpha.7",
      "presentation": 1,
      "presentation_rect": [
       8,
       4,
-      220,
+      228,
       18
      ],
      "fontface": 1,
@@ -114,9 +114,9 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      32,
-      118,
-      25
+      26,
+      228,
+      22
      ],
      "mode": 0,
      "texton": "Choose Cue Folder",
@@ -156,10 +156,10 @@
      "text": "ANALYZE",
      "presentation": 1,
      "presentation_rect": [
-      133,
-      32,
-      126,
-      25
+      8,
+      52,
+      110,
+      22
      ],
      "mode": 0,
      "texton": "ANALYZE",
@@ -199,10 +199,10 @@
      "text": "BUILD (beta)",
      "presentation": 1,
      "presentation_rect": [
-      266,
-      32,
-      120,
-      25
+      126,
+      52,
+      110,
+      22
      ],
      "mode": 0,
      "texton": "BUILD (beta)",
@@ -3155,8 +3155,8 @@
    {
     "box": {
      "id": "obj-pfollow",
-     "maxclass": "newobj",
-     "numinlets": 1,
+     "maxclass": "message",
+     "numinlets": 2,
      "numoutlets": 1,
      "patching_rect": [
       460,
@@ -3359,9 +3359,9 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      65,
-      378,
-      9
+      80,
+      228,
+      8
      ],
      "filename": "aicb_progress.js",
      "parameter_enable": 0,
@@ -3385,12 +3385,12 @@
      "presentation": 1,
      "presentation_rect": [
       8,
-      79,
-      378,
-      35
+      92,
+      228,
+      72
      ],
-     "linecount": 2,
-     "fontsize": 10.5,
+     "linecount": 6,
+     "fontsize": 10.0,
      "varname": "obj-status"
     }
    },
@@ -3406,16 +3406,16 @@
       380,
       20
      ],
-     "text": "SONG TITLE  |  BPM / LENGTH / BAR / WARP",
+     "text": "SONG  |  BPM  LENGTH  BAR  WARP",
      "presentation": 1,
      "presentation_rect": [
-      8,
-      125,
-      378,
-      18
+      246,
+      4,
+      346,
+      16
      ],
      "fontface": 1,
-     "fontsize": 10,
+     "fontsize": 10.0,
      "varname": "obj-resultheading"
     }
    },
@@ -3861,7 +3861,7 @@
       380,
       42
      ],
-     "presentation": 1,
+     "presentation": 0,
      "presentation_rect": [
       8,
       387,
@@ -4172,12 +4172,12 @@
      ],
      "presentation": 1,
      "presentation_rect": [
-      8,
-      359,
-      378,
-      21
+      246,
+      148,
+      346,
+      16
      ],
-     "fontsize": 10,
+     "fontsize": 10.0,
      "varname": "obj-resultcount"
     }
    },
@@ -4281,16 +4281,16 @@
      ],
      "presentation": 1,
      "presentation_rect": [
-      8,
-      147,
-      378,
-      205
+      246,
+      22,
+      346,
+      124
      ],
      "varname": "obj-songtable",
      "rows": 16,
      "cols": 2,
-     "colwidth": 235,
-     "rowheight": 24,
+     "colwidth": 150,
+     "rowheight": 18,
      "readonly": 1,
      "neverdirty": 1,
      "bgcolor": [
@@ -4312,7 +4312,8 @@
       1
      ],
      "vscroll": 1,
-     "hscroll": 1
+     "hscroll": 1,
+     "fontsize": 10.0
     }
    },
    {

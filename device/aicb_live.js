@@ -151,6 +151,9 @@ function cueinfo() {
 function showReviewPage() {
   var data = review || [];
   outlet(4, "table", "clear", "all");
+  // the table sits in the right half of the device (Live keeps device height fixed at 169 px)
+  outlet(4, "table", "col", 0, "width", 130);
+  outlet(4, "table", "col", 1, "width", 216);
   for (var j=0; j<data.length && j<MAX_SONGS; j++) {
     var r=data[j];
     if (r.error) {
