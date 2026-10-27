@@ -1,4 +1,4 @@
-name: Package Sequencer Analyzer alpha
+name: Package Sequencer Analyzer build beta
 on:
   push:
     branches:
@@ -11,16 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Run offline build-core tests
+        run: python3 -m unittest discover -s test -p test_warp_build.py -v
       - name: Build AMXD from Max patch
         run: python3 scripts/package_alpha.py
-      - name: Assemble alpha test kit
+      - name: Assemble test kit (Remote Script + Max device)
         run: |
-          mkdir -p dist/alpha-kit
+          mkdir -p dist/alpha-kit/remote/SeqAnalyzer_Remote
           cp 'dist/Sequencer Analyzer v0.8.0-alpha.amxd' dist/alpha-kit/
           cp device/aicb_live.js device/aicb_node.js device/aicb_progress.js dist/alpha-kit/
-          cp docs/v0.8-alpha.md dist/alpha-kit/README.md
-      - name: Upload alpha kit
+          cp remote/SeqAnalyzer_Remote/__init__.py remote/SeqAnalyzer_Remote/warp_build.py dist/alpha-kit/remote/SeqAnalyzer_Remote/
+          cp install-build-bridge.command dist/alpha-kit/
+          cp docs/build-beta1.md dist/alpha-kit/README.md
+      - name: Upload beta test kit
         uses: actions/upload-artifact@v4
         with:
-          name: seq-analyzer-v0.8.0-alpha
+          name: seq-analyzer-v0.8.0-build-beta1
           path: dist/alpha-kit/
