@@ -29,7 +29,7 @@
   "boxanimatetime": 200,
   "enablehscroll": 1,
   "enablevscroll": 1,
-  "devicewidth": 600.0,
+  "devicewidth": 600,
   "description": "alpha.6 recovery UI: permanently visible Cue Folder, Analyze, Build placeholder, scrollable song table.",
   "digest": "",
   "tags": "",
@@ -82,7 +82,7 @@
       200,
       20
      ],
-     "text": "SEQUENCER ANALYZER | alpha.7",
+     "text": "SEQUENCER ANALYZER | BUILD beta.1",
      "presentation": 1,
      "presentation_rect": [
       8,
@@ -196,7 +196,7 @@
       "",
       ""
      ],
-     "text": "BUILD (beta)",
+     "text": "BUILD 1 (beta)",
      "presentation": 1,
      "presentation_rect": [
       126,
@@ -205,7 +205,7 @@
       22
      ],
      "mode": 0,
-     "texton": "BUILD (beta)",
+     "texton": "BUILD 1 (beta)",
      "varname": "obj-tempobtn",
      "parameter_enable": 1,
      "activebgoncolor": [
@@ -3390,7 +3390,7 @@
       72
      ],
      "linecount": 6,
-     "fontsize": 10.0,
+     "fontsize": 10,
      "varname": "obj-status"
     }
    },
@@ -3415,7 +3415,7 @@
       16
      ],
      "fontface": 1,
-     "fontsize": 10.0,
+     "fontsize": 10,
      "varname": "obj-resultheading"
     }
    },
@@ -4177,7 +4177,7 @@
       346,
       16
      ],
-     "fontsize": 10.0,
+     "fontsize": 10,
      "varname": "obj-resultcount"
     }
    },
@@ -4313,7 +4313,7 @@
      ],
      "vscroll": 1,
      "hscroll": 1,
-     "fontsize": 10.0
+     "fontsize": 10
     }
    },
    {
