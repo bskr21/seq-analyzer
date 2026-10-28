@@ -1,8 +1,13 @@
 """Offline contract tests; run with python3 -m unittest remote.test_bridge_protocol -v."""
 import importlib
+import importlib.util
+import json
 from pathlib import Path
+import queue
+import socket
 from types import ModuleType, SimpleNamespace
 import sys
+import threading
 import unittest
 
 PACKAGE = "SeqAnalyzer_Remote"
@@ -144,6 +149,47 @@ class BridgeTests(unittest.TestCase):
         self.song.clip.warping = True
         self.assertEqual(self.call("build_one", dict(params, bpm=0))["error"]["code"],
                          "BAD_PARAMS")
+
+    def test_socket_accepts_two_requests_on_one_connection(self):
+        framework = ModuleType("_Framework")
+        controls = ModuleType("_Framework.ControlSurface")
+        controls.ControlSurface = type("ControlSurface", (), {})
+        sys.modules["_Framework"] = framework
+        sys.modules["_Framework.ControlSurface"] = controls
+        spec = importlib.util.spec_from_file_location(
+            PACKAGE + ".socket_script", Path(__file__).resolve().parent / PACKAGE / "__init__.py")
+        spec.submodule_search_locations = None
+        script = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(script)
+        worker = SimpleNamespace(_closed=threading.Event(), _requests=queue.Queue(),
+                                 _send=script.SeqAnalyzerRemote._send)
+        server, client = socket.socketpair()
+        client.settimeout(2)
+        thread = threading.Thread(target=script.SeqAnalyzerRemote._serve_connection,
+                                  args=(worker, server))
+        thread.start()
+        try:
+            requests = [
+                {"v": 1, "id": "first", "action": "ping"},
+                {"v": 1, "id": "second", "action": "read_clip_state",
+                 "params": {"clip_ref": self.ref}},
+            ]
+            client.sendall("".join(json.dumps(req) + "\n" for req in requests).encode())
+            responses = []
+            with client.makefile("rb") as stream:
+                for _ in requests:
+                    request, reply = worker._requests.get(timeout=2)
+                    reply.put(self.bridge.handle(request))
+                    responses.append(json.loads(stream.readline()))
+            self.assertEqual([r["id"] for r in responses], ["first", "second"])
+            self.assertTrue(all(r["ok"] for r in responses))
+        finally:
+            worker._closed.set()
+            client.shutdown(socket.SHUT_WR)
+            client.close()
+            server.close()
+            thread.join(timeout=2)
+            self.assertFalse(thread.is_alive())
 
 
 if __name__ == "__main__":
