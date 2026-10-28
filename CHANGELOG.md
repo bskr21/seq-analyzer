@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- docs: tambah `docs/vst/roadmap.md` (M0-M4, gate G0-G4).
+
 ## v0.7.1 (2026-10-22)
 - **Fix: "could not lock the song".** Live applies a tempo change after a short delay, so Warp was switched on at
   the previous tempo. The device now waits until Live reports the song's BPM before switching Warp on.
