@@ -56,6 +56,31 @@ class BuildTests(unittest.TestCase):
         clip = Clip()
         with self.assertRaisesRegex(wb.BuildRejected, "moved"):
             wb.validate_clip(clip, 128, 208)
+    def test_reject_trimmed_start(self):
+        clip = Clip()
+        clip.start_marker = 4.0
+        with self.assertRaisesRegex(wb.BuildRejected, "trimmed"):
+            wb.validate_clip(clip, 64, 208)
+        self.assertEqual(clip.added, [])
+    def test_reject_nonzero_loop_start(self):
+        clip = Clip()
+        clip.loop_start = 4.0
+        with self.assertRaisesRegex(wb.BuildRejected, "loop_start"):
+            wb.validate_clip(clip, 64, 208)
+        self.assertEqual(clip.added, [])
+    def test_reject_loop_on(self):
+        clip = Clip()
+        clip.looping = True
+        with self.assertRaisesRegex(wb.BuildRejected, "Loop is ON"):
+            wb.validate_clip(clip, 64, 208)
+        self.assertEqual(clip.added, [])
+    def test_reject_overlap_before_mutation(self):
+        clip = Clip()
+        with self.assertRaisesRegex(wb.BuildRejected, "overlap"):
+            wb.apply_clip(clip, 150, 64, 208, 500, lambda a,b:(a,b))
+        self.assertEqual(clip.added, [])
+        self.assertEqual(clip.loop_end, 416.0)
+        self.assertEqual(clip.end_marker, 416.0)
     def test_apply_single_clip(self):
         clip = Clip()
         result = wb.apply_clip(clip, 150, 64, 208, 700, lambda a,b:(a,b))
