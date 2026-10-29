@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Add GitHub Actions CI for pull requests and pushes to `feature/vst3-ableton-controller`; it runs the Python unit suite and compiles the Remote Script modules.
 - **Bridge v1 (M0, SeqAnalyzer_Remote, `remote/`) — not yet tested in a real Live 12.** Line-delimited JSON protocol on
   `127.0.0.1:9128` with envelope `{v, id, action, params}`; `id` is echoed, `v` must be 1 (otherwise `PROTOCOL_MISMATCH`).
   - `ping`: handshake (`protocol_min`/`protocol_max` range); returns `session_id`, `live_version`, `capabilities`.
