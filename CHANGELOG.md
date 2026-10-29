@@ -1,6 +1,17 @@
 # Changelog
 
 ## Unreleased
+- **Bridge v1 (M0, SeqAnalyzer_Remote, `remote/`) — belum teruji di Live 12 nyata.** Protokol JSON per baris di
+  `127.0.0.1:9128` dengan envelope `{v, id, action, params}`; `id` di-echo, `v` harus 1 (selain itu `PROTOCOL_MISMATCH`).
+  - `ping`: handshake (rentang `protocol_min`/`protocol_max`), mengembalikan `session_id`, `live_version`, `capabilities`.
+  - `list_clips`: daftar clip audio Arrangement (read-only) beserta `clip_ref`, jumlah warp marker, `file_path`/`duration_s`.
+  - `build_one`: membangun warp map satu clip dengan `dry_run` (validasi + `planned_markers` tanpa mengubah Live); bungkus undo step; mengembalikan `state_after`.
+  - `read_clip_state`: membaca ulang warp marker dan `implied_bpm_segments` untuk verifikasi G0 (termasuk setelah Set dibuka ulang).
+  - Error terstruktur `{code, message, retryable, details}` (mis. `CLIP_MOVED`, `WARP_MAP_NOT_PRISTINE`, `PLAYBACK_ACTIVE`, `BUSY`).
+  - Batas request 16 KiB (`REQUEST_TOO_LARGE`), 20 detik tanpa baris lengkap = koneksi ditutup, 15 detik menunggu main thread (`TIMEOUT_MAIN_THREAD`), antrean 8 request (`BUSY`).
+  - Panduan instal dan verifikasi di `remote/README.md`; test kontrak di `test/test_bridge_protocol.py`.
+  - **Belum terbukti:** bridge TCP di Live nyata (beta.1 hanya `ECONNREFUSED`), `add_warp_marker`/`loop_end`/`end_marker` lewat integrasi produk, ketahanan warp map setelah reopen (inti G0), ketersediaan `live_version`/`file_path`/`warp_markers` di 12.3.2, apakah marker akhir tersembunyi muncul di `warp_markers`. Status Lead tidak bisa dibaca API: aktifkan manual setelah BUILD. Test yang ada memakai fake clip.
+  - **Selisih ADR 0001 vs implementasi (kode tidak diubah):** (1) protokol 0 beta.1 tidak didukung, hanya v1 (menjawab T3); (2) `result._session` dikirim pada semua respons selain `ping`, ADR menyebutnya opsional di M0; (3) `duration` dibatasi 30–86400 detik, batas atas tidak ada di ADR; (4) `INTERNAL` ada di ADR tetapi belum dipakai, exception tak terduga menjadi `LIVE_API_ERROR`; (5) `BuildRejected` tidak membawa `details` (ADR memberi contoh `expected_start`/`actual_start` untuk `CLIP_MOVED`); (6) server melayani satu koneksi pada satu waktu, koneksi menganggur menahan klien lain hingga 20 detik; (7) `PROTOCOL_MISMATCH` pada `ping` memakai kondisi rentang, pada request lain `v` != 1.
 - docs: tambah `docs/vst/roadmap.md` (M0-M4, gate G0-G4).
 
 ## v0.7.1 (2026-10-22)
