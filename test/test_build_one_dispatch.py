@@ -53,46 +53,69 @@ class BuildOnePreflightTests(unittest.TestCase):
         )
         self.controller = remote.SeqAnalyzerRemote.__new__(remote.SeqAnalyzerRemote)
         self.controller.fake_song = self.song
-        self.request = dict(action="build_one", track_index=0, start=64,
-                            clip_name="GJT", duration=208, bpm=150)
+        self.request = {
+            "v": 1, "id": "qa-build-one", "action": "build_one",
+            "params": {
+                "clip_ref": {"track_index": 0, "start": 64, "name": "GJT"},
+                "duration": 208, "bpm": 150,
+            },
+        }
+        self.controller._dispatcher = remote.Dispatcher(lambda: self.song)
 
-    def assert_rejected_without_changes(self, message):
-        with self.assertRaisesRegex(remote.BuildRejected, message):
-            self.controller._execute(self.request)
+    def assert_rejected_without_changes(self, code, message):
+        response = self.controller._dispatcher.handle(self.request)
+        self.assertFalse(response["ok"])
+        self.assertEqual(response["id"], "qa-build-one")
+        self.assertEqual(response["error"]["code"], code)
+        self.assertRegex(response["error"]["message"], message)
         self.assertEqual(self.clip.added, [])
         self.assertEqual(self.clip.loop_end, 416.0)
         self.assertEqual(self.clip.end_marker, 416.0)
 
     def test_reject_playback_active(self):
         self.song.is_playing = True
-        self.assert_rejected_without_changes("stop playback/recording")
+        self.assert_rejected_without_changes("PLAYBACK_ACTIVE", "stop playback and recording")
 
     def test_reject_recording_active(self):
         self.song.record_mode = True
-        self.assert_rejected_without_changes("stop playback/recording")
+        self.assert_rejected_without_changes("PLAYBACK_ACTIVE", "stop playback and recording")
 
     def test_reject_moved_clip(self):
-        self.clip.start_time = 68.0
-        self.assert_rejected_without_changes("could not uniquely find analyzed clip")
+        # Simulate a clip moving between identity lookup and preflight validation.
+        original = self.clip
+
+        class MovingClip:
+            def __init__(self, clip):
+                self.clip = clip
+                self.start_reads = 0
+
+            def __getattr__(self, name):
+                if name == "start_time":
+                    self.start_reads += 1
+                    return 64.03 if self.start_reads >= 3 else 64.0
+                return getattr(self.clip, name)
+
+        self.song.tracks[0].arrangement_clips[0] = MovingClip(original)
+        self.assert_rejected_without_changes("CLIP_MOVED", "clip moved since Analyze")
 
     def test_reject_trimmed_clip(self):
         self.clip.start_marker = 4.0
-        self.assert_rejected_without_changes("trimmed")
+        self.assert_rejected_without_changes("CLIP_TRIMMED", "trimmed")
 
     def test_reject_loop_on(self):
         self.clip.looping = True
-        self.assert_rejected_without_changes("Loop is ON")
+        self.assert_rejected_without_changes("LOOP_ON", "Loop is ON")
 
     def test_reject_non_pristine_marker_count(self):
         self.clip.warp_markers.append(SimpleNamespace(sample_time=100, beat_time=250))
-        self.assert_rejected_without_changes("exactly two original Warp Markers")
+        self.assert_rejected_without_changes("WARP_MAP_NOT_PRISTINE", "exactly two original Warp Markers")
 
     def test_reject_overlap_with_next_clip(self):
         next_clip = Clip()
         next_clip.name = "next"
         next_clip.start_time = 500.0
         self.song.tracks[0].arrangement_clips.append(next_clip)
-        self.assert_rejected_without_changes("overlap")
+        self.assert_rejected_without_changes("OVERLAPS_NEXT_CLIP", "overlap")
         self.assertEqual(next_clip.added, [])
 
 
