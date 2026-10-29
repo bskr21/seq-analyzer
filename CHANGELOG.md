@@ -1,17 +1,17 @@
 # Changelog
 
 ## Unreleased
-- **Bridge v1 (M0, SeqAnalyzer_Remote, `remote/`) — belum teruji di Live 12 nyata.** Protokol JSON per baris di
-  `127.0.0.1:9128` dengan envelope `{v, id, action, params}`; `id` di-echo, `v` harus 1 (selain itu `PROTOCOL_MISMATCH`).
-  - `ping`: handshake (rentang `protocol_min`/`protocol_max`), mengembalikan `session_id`, `live_version`, `capabilities`.
-  - `list_clips`: daftar clip audio Arrangement (read-only) beserta `clip_ref`, jumlah warp marker, `file_path`/`duration_s`.
-  - `build_one`: membangun warp map satu clip dengan `dry_run` (validasi + `planned_markers` tanpa mengubah Live); bungkus undo step; mengembalikan `state_after`.
-  - `read_clip_state`: membaca ulang warp marker dan `implied_bpm_segments` untuk verifikasi G0 (termasuk setelah Set dibuka ulang).
-  - Error terstruktur `{code, message, retryable, details}` (mis. `CLIP_MOVED`, `WARP_MAP_NOT_PRISTINE`, `PLAYBACK_ACTIVE`, `BUSY`).
-  - Batas request 16 KiB (`REQUEST_TOO_LARGE`), 20 detik tanpa baris lengkap = koneksi ditutup, 15 detik menunggu main thread (`TIMEOUT_MAIN_THREAD`), antrean 8 request (`BUSY`).
-  - Panduan instal dan verifikasi di `remote/README.md`; test kontrak di `test/test_bridge_protocol.py`.
-  - **Belum terbukti:** bridge TCP di Live nyata (beta.1 hanya `ECONNREFUSED`), `add_warp_marker`/`loop_end`/`end_marker` lewat integrasi produk, ketahanan warp map setelah reopen (inti G0), ketersediaan `live_version`/`file_path`/`warp_markers` di 12.3.2, apakah marker akhir tersembunyi muncul di `warp_markers`. Status Lead tidak bisa dibaca API: aktifkan manual setelah BUILD. Test yang ada memakai fake clip.
-  - **Selisih ADR 0001 vs implementasi (kode tidak diubah):** (1) protokol 0 beta.1 tidak didukung, hanya v1 (menjawab T3); (2) `result._session` dikirim pada semua respons selain `ping`, ADR menyebutnya opsional di M0; (3) `duration` dibatasi 30–86400 detik, batas atas tidak ada di ADR; (4) `INTERNAL` ada di ADR tetapi belum dipakai, exception tak terduga menjadi `LIVE_API_ERROR`; (5) `BuildRejected` tidak membawa `details` (ADR memberi contoh `expected_start`/`actual_start` untuk `CLIP_MOVED`); (6) server melayani satu koneksi pada satu waktu, koneksi menganggur menahan klien lain hingga 20 detik; (7) `PROTOCOL_MISMATCH` pada `ping` memakai kondisi rentang, pada request lain `v` != 1.
+- **Bridge v1 (M0, SeqAnalyzer_Remote, `remote/`) — not yet tested in a real Live 12.** Line-delimited JSON protocol on
+  `127.0.0.1:9128` with envelope `{v, id, action, params}`; `id` is echoed, `v` must be 1 (otherwise `PROTOCOL_MISMATCH`).
+  - `ping`: handshake (`protocol_min`/`protocol_max` range); returns `session_id`, `live_version`, `capabilities`.
+  - `list_clips`: read-only list of Arrangement audio clips with `clip_ref`, warp marker count, `file_path`/`duration_s`.
+  - `build_one`: builds one clip's warp map, with `dry_run` (validation + `planned_markers` without changing Live); wrapped in an undo step; returns `state_after`.
+  - `read_clip_state`: re-reads warp markers and `implied_bpm_segments` for G0 verification (including after the Set is reopened).
+  - Structured errors `{code, message, retryable, details}` (e.g. `CLIP_MOVED`, `WARP_MAP_NOT_PRISTINE`, `PLAYBACK_ACTIVE`, `BUSY`).
+  - Limits: 16 KiB per request (`REQUEST_TOO_LARGE`), connection closed after 20 s without a complete line, 15 s wait for the main thread (`TIMEOUT_MAIN_THREAD`), queue of 8 requests (`BUSY`).
+  - Install and verification guide in `remote/README.md`; contract tests in `test/test_bridge_protocol.py`.
+  - **Not yet proven:** the TCP bridge in a real Live (beta.1 only got `ECONNREFUSED`), `add_warp_marker`/`loop_end`/`end_marker` through the product integration, warp map persistence after reopen (the core of G0), availability of `live_version`/`file_path`/`warp_markers` in 12.3.2, whether the hidden end marker appears in `warp_markers`. Lead status cannot be read via the API: enable it manually after BUILD. Existing tests use fake clips.
+  - **ADR 0001 vs implementation differences (code unchanged):** (1) beta.1 protocol 0 is not supported, v1 only (answers T3); (2) `result._session` is sent on every response except `ping`, while the ADR makes it optional in M0; (3) `duration` is capped at 30–86400 s, the upper bound is not in the ADR; (4) `INTERNAL` is in the ADR but unused, unexpected exceptions become `LIVE_API_ERROR`; (5) `BuildRejected` carries no `details` (the ADR example for `CLIP_MOVED` has `expected_start`/`actual_start`); (6) the server serves one connection at a time, so an idle connection blocks other clients for up to 20 s; (7) `PROTOCOL_MISMATCH` on `ping` is range-based, on other requests it is `v` != 1.
 - docs: tambah `docs/vst/roadmap.md` (M0-M4, gate G0-G4).
 
 ## v0.7.1 (2026-10-22)
