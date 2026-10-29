@@ -1,0 +1,25 @@
+name: Python tests
+
+on:
+  pull_request:
+    branches:
+      - feature/vst3-ableton-controller
+  push:
+    branches:
+      - feature/vst3-ableton-controller
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Run Python unit tests
+        run: python3 -m unittest discover -s test -p "test_*.py" -v
+      - name: Compile Remote Script modules
+        run: python3 -m py_compile remote/SeqAnalyzer_Remote/*.py
