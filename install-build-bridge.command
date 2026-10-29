@@ -4,12 +4,14 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SOURCE="$HERE/remote/SeqAnalyzer_Remote"
 DEST="$HOME/Music/Ableton/User Library/Remote Scripts/SeqAnalyzer_Remote"
-if [ ! -f "$SOURCE/__init__.py" ] || [ ! -f "$SOURCE/warp_build.py" ]; then
-  echo "ERROR: Extract the entire alpha/beta package before installing." >&2
-  exit 1
-fi
+for FILE in __init__.py bridge_protocol.py warp_build.py; do
+  if [ ! -f "$SOURCE/$FILE" ]; then
+    echo "ERROR: Missing $SOURCE/$FILE; extract the entire alpha/beta package before installing." >&2
+    exit 1
+  fi
+done
 mkdir -p "$DEST"
-cp "$SOURCE/__init__.py" "$SOURCE/warp_build.py" "$DEST/"
+cp "$SOURCE/__init__.py" "$SOURCE/bridge_protocol.py" "$SOURCE/warp_build.py" "$DEST/"
 echo "Installed Remote Script to:"
 echo "$DEST"
 echo

@@ -8,7 +8,9 @@ import math
 TOL = 0.02
 
 class BuildRejected(Exception):
-    pass
+    def __init__(self, message, code="BAD_PARAMS"):
+        super().__init__(message)
+        self.code = code
 
 def _number(v, label):
     try:
@@ -33,7 +35,7 @@ def make_plan(duration, bpm, start, next_start=None):
         next_start = _number(next_start, "next clip start")
         if projected_end > next_start + TOL:
             raise BuildRejected("would overlap the next clip (end %.3f > start %.3f)" %
-                                (projected_end, next_start))
+                                (projected_end, next_start), "OVERLAPS_NEXT_CLIP")
     # Experiment: GJT 208 sec at 150 BPM => 520 beats.
     # Use intermediate points to keep the final segment at target BPM.
     samples = [min(30.0, duration * .25), duration - min(8.0, duration * .10), duration]
@@ -47,27 +49,27 @@ def make_plan(duration, bpm, start, next_start=None):
 
 def validate_clip(clip, expected_start, expected_duration):
     if not getattr(clip, "is_audio_clip", False):
-        raise BuildRejected("target is not an audio clip")
+        raise BuildRejected("target is not an audio clip", "NOT_AUDIO_CLIP")
     if not getattr(clip, "warping", False):
-        raise BuildRejected("Warp is OFF; activate Warp manually and re-analyze")
+        raise BuildRejected("Warp is OFF; activate Warp manually and re-analyze", "WARP_OFF")
     if getattr(clip, "looping", False):
-        raise BuildRejected("Loop is ON; this test supports non-looping clips only")
+        raise BuildRejected("Loop is ON; this test supports non-looping clips only", "LOOP_ON")
     if abs(_number(clip.start_time, "start_time") - expected_start) > TOL:
-        raise BuildRejected("clip moved since Analyze; analyze again")
+        raise BuildRejected("clip moved since Analyze; analyze again", "CLIP_MOVED")
     dur = _number(clip.sample_length, "sample_length") / _number(clip.sample_rate, "sample_rate")
     if abs(dur - expected_duration) > 0.06:
-        raise BuildRejected("audio changed since Analyze; analyze again")
+        raise BuildRejected("audio changed since Analyze; analyze again", "AUDIO_CHANGED")
     if abs(_number(clip.start_marker, "start_marker")) > TOL:
-        raise BuildRejected("trimmed clip start is not supported yet")
+        raise BuildRejected("trimmed clip start is not supported yet", "CLIP_TRIMMED")
     if abs(_number(clip.loop_start, "loop_start")) > TOL:
-        raise BuildRejected("nonzero loop_start is not supported yet")
+        raise BuildRejected("nonzero loop_start is not supported yet", "CLIP_TRIMMED")
     # Do not overwrite existing manually-edited tempo maps.
     markers = list(clip.warp_markers)
     if len(markers) != 2:
-        raise BuildRejected("expected exactly two original Warp Markers; custom or previously built map detected")
+        raise BuildRejected("expected exactly two original Warp Markers; custom or previously built map detected", "WARP_MAP_NOT_PRISTINE")
     first = min(markers, key=lambda m: float(m.sample_time))
     if abs(float(first.sample_time)) > TOL or abs(float(first.beat_time)) > TOL:
-        raise BuildRejected("first Warp Marker is not 0 seconds / 0 beats; manual alignment required")
+        raise BuildRejected("first Warp Marker is not 0 seconds / 0 beats; manual alignment required", "FIRST_MARKER_NOT_ZERO")
     return dur
 
 def apply_clip(clip, bpm, expected_start, expected_duration, next_start, marker_factory):

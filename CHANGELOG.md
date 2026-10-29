@@ -1,6 +1,17 @@
 # Changelog
 
 ## Unreleased
+- **Bridge v1 (M0, SeqAnalyzer_Remote, `remote/`) — not yet tested in a real Live 12.** Line-delimited JSON protocol on
+  `127.0.0.1:9128` with envelope `{v, id, action, params}`; `id` is echoed, `v` must be 1 (otherwise `PROTOCOL_MISMATCH`).
+  - `ping`: handshake (`protocol_min`/`protocol_max` range); returns `session_id`, `live_version`, `capabilities`.
+  - `list_clips`: read-only list of Arrangement audio clips with `clip_ref`, warp marker count, `file_path`/`duration_s`.
+  - `build_one`: builds one clip's warp map, with `dry_run` (validation + `planned_markers` without changing Live); wrapped in an undo step; returns `state_after`.
+  - `read_clip_state`: re-reads warp markers and `implied_bpm_segments` for G0 verification (including after the Set is reopened).
+  - Structured errors `{code, message, retryable, details}` (e.g. `CLIP_MOVED`, `WARP_MAP_NOT_PRISTINE`, `PLAYBACK_ACTIVE`, `BUSY`).
+  - Limits: 16 KiB per request (`REQUEST_TOO_LARGE`), connection closed after 20 s without a complete line, 15 s wait for the main thread (`TIMEOUT_MAIN_THREAD`), queue of 8 requests (`BUSY`).
+  - Install and verification guide in `remote/README.md`; contract tests in `test/test_bridge_protocol.py`.
+  - **Not yet proven:** the TCP bridge in a real Live (beta.1 only got `ECONNREFUSED`), `add_warp_marker`/`loop_end`/`end_marker` through the product integration, warp map persistence after reopen (the core of G0), availability of `live_version`/`file_path`/`warp_markers` in 12.3.2, whether the hidden end marker appears in `warp_markers`. Lead status cannot be read via the API: enable it manually after BUILD. Existing tests use fake clips.
+  - **ADR 0001 vs implementation differences (code unchanged):** (1) beta.1 protocol 0 is not supported, v1 only (answers T3); (2) `result._session` is sent on every response except `ping`, while the ADR makes it optional in M0; (3) `duration` is capped at 30–86400 s, the upper bound is not in the ADR; (4) `INTERNAL` is in the ADR but unused, unexpected exceptions become `LIVE_API_ERROR`; (5) `BuildRejected` carries no `details` (the ADR example for `CLIP_MOVED` has `expected_start`/`actual_start`); (6) the server serves one connection at a time, so an idle connection blocks other clients for up to 20 s; (7) `PROTOCOL_MISMATCH` on `ping` is range-based, on other requests it is `v` != 1.
 - docs: tambah `docs/vst/roadmap.md` (M0-M4, gate G0-G4).
 
 ## v0.7.1 (2026-10-22)
