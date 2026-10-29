@@ -1,4 +1,4 @@
-"""Offline contract tests; run with python3 -m unittest remote.test_bridge_protocol -v."""
+"""Offline bridge contract tests; run with unittest discovery from the repo root."""
 import importlib
 import importlib.util
 import json
@@ -11,9 +11,10 @@ import threading
 import unittest
 
 PACKAGE = "SeqAnalyzer_Remote"
+PACKAGE_PATH = Path(__file__).resolve().parents[1] / "remote" / PACKAGE
 if PACKAGE not in sys.modules:
     package = ModuleType(PACKAGE)
-    package.__path__ = [str(Path(__file__).resolve().parent / PACKAGE)]
+    package.__path__ = [str(PACKAGE_PATH)]
     sys.modules[PACKAGE] = package
 protocol = importlib.import_module(PACKAGE + ".bridge_protocol")
 
@@ -157,7 +158,7 @@ class BridgeTests(unittest.TestCase):
         sys.modules["_Framework"] = framework
         sys.modules["_Framework.ControlSurface"] = controls
         spec = importlib.util.spec_from_file_location(
-            PACKAGE + ".socket_script", Path(__file__).resolve().parent / PACKAGE / "__init__.py")
+            PACKAGE + ".socket_script", PACKAGE_PATH / "__init__.py")
         spec.submodule_search_locations = None
         script = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(script)
