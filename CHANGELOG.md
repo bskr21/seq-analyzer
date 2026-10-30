@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Fix macOS bridge verification commands in `remote/README.md` to use `nc -w 5`; macOS `nc -N` requires a numeric argument.
 - **Bridge v1 (M0, SeqAnalyzer_Remote, `remote/`) — not yet tested in a real Live 12.** Line-delimited JSON protocol on
   `127.0.0.1:9128` with envelope `{v, id, action, params}`; `id` is echoed, `v` must be 1 (otherwise `PROTOCOL_MISMATCH`).
   - `ping`: handshake (`protocol_min`/`protocol_max` range); returns `session_id`, `live_version`, `capabilities`.
