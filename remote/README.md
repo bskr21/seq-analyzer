@@ -16,7 +16,7 @@ The older repository-root `install-build-bridge.command` installs only two files
 With Live running and the Control Surface selected:
 
 ```sh
-printf '{"v":1,"id":"ping-1","action":"ping","params":{"protocol_min":1,"protocol_max":1}}\n' | nc -N 127.0.0.1 9128
+printf '{"v":1,"id":"ping-1","action":"ping","params":{"protocol_min":1,"protocol_max":1}}\n' | nc -w 5 127.0.0.1 9128
 ```
 
 Expect `ok:true`, the same `id`, `protocol_version:1`, a `session_id`, and `capabilities` containing `list_clips`, `build_one`, and `read_clip_state`. `ECONNREFUSED` means the script is not listening; check the Control Surface choice and Log.txt. The `session_id` changes when the Remote Script reloads.
@@ -27,10 +27,10 @@ Expect `ok:true`, the same `id`, `protocol_version:1`, a `session_id`, and `capa
 2. Run `list_clips` and copy its exact `clip_ref` into the next requests. The example below uses track 0, start 64 beats, name `GJT`, duration 208 seconds, BPM 150. Replace all values with those of your clip.
 
 ```sh
-printf '{"v":1,"id":"list-1","action":"list_clips","params":{"track_index":0}}\n' | nc -N 127.0.0.1 9128
-printf '{"v":1,"id":"dry-1","action":"build_one","params":{"clip_ref":{"track_index":0,"start":64,"name":"GJT"},"duration":208,"bpm":150,"dry_run":true}}\n' | nc -N 127.0.0.1 9128
-printf '{"v":1,"id":"build-1","action":"build_one","params":{"clip_ref":{"track_index":0,"start":64,"name":"GJT"},"duration":208,"bpm":150}}\n' | nc -N 127.0.0.1 9128
-printf '{"v":1,"id":"read-1","action":"read_clip_state","params":{"clip_ref":{"track_index":0,"start":64,"name":"GJT"}}}\n' | nc -N 127.0.0.1 9128
+printf '{"v":1,"id":"list-1","action":"list_clips","params":{"track_index":0}}\n' | nc -w 5 127.0.0.1 9128
+printf '{"v":1,"id":"dry-1","action":"build_one","params":{"clip_ref":{"track_index":0,"start":64,"name":"GJT"},"duration":208,"bpm":150,"dry_run":true}}\n' | nc -w 5 127.0.0.1 9128
+printf '{"v":1,"id":"build-1","action":"build_one","params":{"clip_ref":{"track_index":0,"start":64,"name":"GJT"},"duration":208,"bpm":150}}\n' | nc -w 5 127.0.0.1 9128
+printf '{"v":1,"id":"read-1","action":"read_clip_state","params":{"clip_ref":{"track_index":0,"start":64,"name":"GJT"}}}\n' | nc -w 5 127.0.0.1 9128
 ```
 
 3. Record the `build_one` response and the separate `read_clip_state` response. The last is authoritative: check marker positions, implied BPM segments, `end_time`, and the clip in Live. Never automatically retry `build_one` after a timeout; read state first.
